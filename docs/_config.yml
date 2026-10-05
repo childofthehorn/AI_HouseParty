@@ -10,10 +10,6 @@ repository: childofthehorn/AI_HouseParty
 markdown: kramdown
 kramdown:
   input: GFM
-  hard_wrap: false
-  syntax_highlighter: rouge
-  # README uses <details> around fenced code; parse the markdown inside block HTML.
-  parse_block_html: true
 permalink: pretty
 
 # Whitelisted on GitHub Pages. Turns [x](AGENTS.md) into the page's URL.

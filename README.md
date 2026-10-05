@@ -138,7 +138,8 @@ Then, in order:
 5. Once that PR is green, run `./scripts/branch-protection.sh OWNER/REPO main`
    (diff `gh api repos/OWNER/REPO/branches/main/protection` first).
 
-<details><summary>By hand instead of v1-setup.sh</summary>
+<details markdown="1">
+<summary markdown="span">By hand instead of v1-setup.sh</summary>
 
 ```bash
 # 1. the door (fastest value, least argument)

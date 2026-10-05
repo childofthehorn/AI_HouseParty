@@ -19,7 +19,8 @@ second one.
 ## TypeScript rules
 
 - New code is TypeScript with `strict: true`. New `.js` only for config a tool
-  requires in JS.
+  requires in JS. The one exception is `docs/assets/site.js`: the website has no
+  toolchain on purpose, so it is hand-written JS held to the rules below.
 - No `any`. Use `unknown` and narrow. Data from outside (fetch responses, JSON,
   env, `postMessage`, storage) is parsed with the repo's schema validator at the
   boundary before it gets a type.

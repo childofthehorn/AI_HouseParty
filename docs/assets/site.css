@@ -232,13 +232,10 @@ pre code { padding: 0; background: none; font-size: inherit; }
   height: auto;
 }
 
-/* Wide tables scroll inside their own box instead of widening the page. */
+/* site.js wraps wide tables so they scroll in their own box; the table keeps its semantics. */
+.table-wrap { overflow-x: auto; margin-block: 0 1em; }
+
 table {
-  display: block;
-  width: fit-content;
-  max-width: 100%;
-  overflow-x: auto;
-  margin-block: 0 1em;
   border-collapse: collapse;
   font-size: 0.95em;
 }
@@ -290,5 +287,4 @@ summary {
   a { color: #000; }
   #content a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 0.85em; }
   pre, table, details, .mermaid { break-inside: avoid; }
-  table { display: table; width: auto; }
 }

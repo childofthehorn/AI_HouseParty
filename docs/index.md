@@ -13,9 +13,9 @@ learn from. Copy what you need. None of it is clever, which is the point.
 to. Rooms say how much damage a change can do. Gates make a PR prove it belongs
 in the room it touches. Agents follow the same rules as the people.
 
-This site is the repository's own markdown, built by GitHub Pages. Nothing here
-is written twice. The [full README](README.md) has every command; this page is
-the tour.
+This site is the repository's own markdown, built by GitHub Pages: the pages
+are the files. The [full README](README.md) has every command; this page is the
+tour.
 
 ## The house map
 

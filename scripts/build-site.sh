@@ -42,6 +42,7 @@ add_page adr/README.md /adr/
 add_page agents/README.md /agents/
 add_page skills/README.md /skills/
 for f in "$ROOT"/platform/AGENTS.*.md "$ROOT"/adr/0*.md; do
+  [ "$(basename "$f")" = 0000-template.md ] && continue   # the template is not a page
   add_page "${f#"$ROOT"/}"
 done
 
