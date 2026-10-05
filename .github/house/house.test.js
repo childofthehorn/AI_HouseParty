@@ -187,10 +187,10 @@ test('runners: ensureLabels creates, recolors, and renames v1 room/ labels in pl
   };
   await h.ensureLabels({ github, context: { repo: { owner: 'o', repo: 'r' } } }, config);
   assert.deepEqual(calls.sort(), [
-    ['update', 'kitchen', null, 'D93F0B'],          // existed in default gray: recolored
-    ['update', 'room/garage', 'garage', 'FBCA04'],  // v1 name: renamed in place
-    ['create', 'driveway', '6F42C1'],
-    ['create', 'safe-room', '000000'],
-    ['create', 'living-room', '0E8A16'],
+    ['update', 'kitchen', null, 'EE2B37'],          // existed in default gray: recolored
+    ['update', 'room/garage', 'garage', 'FFC512'],  // v1 name: renamed in place
+    ['create', 'driveway', 'FF7A1A'],
+    ['create', 'safe-room', '15171D'],
+    ['create', 'living-room', '59C1EE'],
   ].sort());
 });

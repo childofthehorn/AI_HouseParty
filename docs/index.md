@@ -3,39 +3,108 @@ title: Start here
 permalink: /
 ---
 
-# House Rules
+<section class="hero">
+  <div>
+    <p class="eyebrow">Hosting the AI Slop Party</p>
+    <h1>House Rules</h1>
+    <p class="lede">Shoes off. Apron on.</p>
+    <ul>
+      <li>The game is <strong>your product</strong>.</li>
+      <li>The TV is <strong>GitHub</strong>.</li>
+      <li>The food and drink is <strong>the AI</strong>.</li>
+    </ul>
+  </div>
+  <img src="{{ '/assets/img/host-robot.png' | relative_url }}" width="480" height="480" alt="A green robot host in a white apron, waving, in front of a pink sunburst.">
+</section>
 
-Everything promised on the last slide of *The AI Slop Party*: the rules, the
-gates, the agents and skills that work inside them, and the team memory they
-learn from. Copy what you need. None of it is clever, which is the point.
+The house is your codebase, or every codebase your team contributes to. Rooms
+say how much damage a change can do. Gates make a PR prove it belongs in the
+room it touches. Agents follow the same rules as the people. This site is the
+repository's own markdown, rendered; the [README](README.md) has every command.
 
-**The house is your codebase**, or the set of codebases everyone contributes
-to. Rooms say how much damage a change can do. Gates make a PR prove it belongs
-in the room it touches. Agents follow the same rules as the people.
+## The house
 
-This site is the repository's own markdown, built by GitHub Pages: the pages
-are the files. The [full README](README.md) has every command; this page is the
-tour.
-
-## The house map
+<figure class="figure">
+  <img src="{{ '/assets/img/house-rooms.png' | relative_url }}" width="1280" height="720" alt="Cross-section of a house: a red kitchen top-left, a sky-blue living room with a TV top-right, a yellow garage bottom-left and an orange driveway with a car bottom-right.">
+</figure>
 
 Every path in the repo lives in a room. The room sets the gate.
 
-| Room | Contents | Gate |
-|---|---|---|
-| Kitchen | money, auth, regulated, shared contracts, DB migrations, dependency manifests, the gates themselves | two approvals (one senior), named human, no unsupervised agents |
-| Living Room | core product, design system, web app, services | normal review, full CI |
-| Garage | spikes, prototypes | go nuts; door stays shut; nothing ships from here |
-| Driveway | scripts, dashboards, analyses | zero gates, mandatory expiry, towed at 90 days |
-| **Safe-room** | cryptography, secure storage, key material — on top of its room | two senior approvals, one from security |
+<div class="grid">
+  <article class="room room--kitchen">
+    <div class="room__head"><img src="{{ '/assets/img/room-kitchen.png' | relative_url }}" width="480" height="446" alt="A chef's knife and a flame."><h3>Kitchen</h3></div>
+    <div class="room__body"><p>Money paths. Auth. Anything regulated.</p><p>No unsupervised guests. Ever. Two-key changes.</p></div>
+  </article>
+  <article class="room room--living-room">
+    <div class="room__head"><img src="{{ '/assets/img/room-living-room.png' | relative_url }}" width="480" height="446" alt="A television with a crowd watching."><h3>Living Room</h3></div>
+    <div class="room__body"><p>Core product. The game's on in here.</p><p>Normal review, normal gates. Everybody sees it break.</p></div>
+  </article>
+  <article class="room room--garage">
+    <div class="room__head"><img src="{{ '/assets/img/room-garage.png' | relative_url }}" width="480" height="446" alt="A padlocked garage door."><h3>Garage</h3></div>
+    <div class="room__body"><p>Prototypes, spikes, weird ideas. Go nuts.</p><p>One rule: the garage door stays shut.</p></div>
+  </article>
+  <article class="room room--driveway">
+    <div class="room__head"><img src="{{ '/assets/img/room-driveway.png' | relative_url }}" width="480" height="446" alt="A car with a parking ticket on it."><h3>Driveway</h3></div>
+    <div class="room__body"><p>Dashboards, scripts, Thursday's analysis.</p><p>Zero gates. Mandatory expiry. 90 days, then it gets towed.</p></div>
+  </article>
+  <article class="room room--safe-room">
+    <div class="room__head"><h3>Safe-room</h3></div>
+    <div class="room__body"><p>Cryptography, secure storage, key material. It sits on top of whatever room the path is already in.</p><p>Two senior approvals, one from security.</p></div>
+  </article>
+</div>
 
-A PR can touch several rooms and must declare each one. Automation labels the
+A PR can touch several rooms and must tick every one. Automation labels the
 rooms from the diff, so nobody argues about it. Why tiers, and why by blast
 radius: [ADR-0001](adr/0001-blast-radius-tiers.md).
 
-## How it fits together
+## The door policy
 
-Rules on the fridge, a door that checks them, and guests who read them.
+<div class="grid" markdown="1">
+<div class="card" markdown="1">
+
+### Rules on the fridge
+
+Short, generic, read before you cook: [AGENTS.md](AGENTS.md), plus one page of
+[platform rules](platform/README.md) per stack.
+
+</div>
+<div class="card" markdown="1">
+
+### The door
+
+CODEOWNERS, the dependency gate and the room workflows read the base commit, so
+a PR cannot loosen its own rules: [room automation](README.md#room-automation)
+and [quality gates](README.md#quality-gates).
+
+</div>
+<div class="card" markdown="1">
+
+### Coasters
+
+Every rule stands on a [decision](adr/README.md) that says why, so nobody has to
+relitigate it at the party.
+
+</div>
+</div>
+
+## Reading the room
+
+<div class="split" markdown="1">
+<figure>
+  <img src="{{ '/assets/img/detective.png' | relative_url }}" width="480" height="480" alt="A detective in a deerstalker hat looking through a magnifying glass.">
+</figure>
+<div markdown="1">
+
+The guests read the fridge before they touch anything. [41 agents](agents/README.md)
+by domain, hosted by `host-agent` and orchestrated by `eng-manager-agent`.
+[Skills](skills/README.md) such as `architecture-review` give them a procedure to
+follow. Each agent carries a House practices section built from team memory, so
+the mistakes made here once stay made once.
+
+</div>
+</div>
+
+## How it fits together
 
 ```mermaid
 flowchart LR
@@ -60,36 +129,14 @@ flowchart LR
   Guests -- open --> PR
 ```
 
-**The fridge.** [`AGENTS.md`](AGENTS.md) is the short, generic rulebook.
-[Platform rules](platform/README.md) add a page per stack: Kotlin, Android, KMP,
-Swift, iOS, Java, Spring, TypeScript, React. [Decisions](adr/README.md) record
-why the rules are what they are.
+## Take the files home
 
-**The door.** Workflows in `.github/` label PRs by room, fail PRs that do not
-declare every room they touch, require the right approvals, and tow expired
-Driveway files. A PR cannot loosen its own rules; the door reads the base
-commit.
-
-**The guests.** [41 agents](agents/README.md) by domain, hosted by `host-agent`
-and orchestrated by `eng-manager-agent`. [Skills](skills/README.md) such as
-`architecture-review` give them a procedure to follow. Each agent carries a
-House practices section built from team memory.
-
-## Pick your path
+Read [Assumptions](ASSUMPTIONS.md) first. It lists every guess v1 makes about
+your repo and how to check each one; only you know where your Kitchen is.
 
 | You want… | Start with | Then read |
 |---|---|---|
 | the agents and skills everywhere you work | [A personal agent set](README.md#a-personal-agent-set) | [Agents](agents/README.md), [Skills](skills/README.md) |
-| one repo to follow the house rules | [One repository](README.md#one-repository) | [Assumptions](ASSUMPTIONS.md), [House rules](AGENTS.md), [Platform rules](platform/README.md) |
+| one repo to follow the house rules | [One repository](README.md#one-repository) | [House rules](AGENTS.md), [Platform rules](platform/README.md) |
 | the same house across several repos | [A set of repositories](README.md#a-set-of-repositories) | [Decisions](adr/README.md), [Agents](agents/README.md) |
 | a tool other than Claude Code | [Other AI systems](PORTABILITY.md) | [Which system reads what](README.md#which-system-reads-what) |
-
-## Before you install
-
-Read [Assumptions](ASSUMPTIONS.md) first. It lists every guess v1 makes about
-your repo and how to check each one. The install script copies the rules and
-gates, but only you know where your Kitchen is.
-
-Codex, Copilot, Cursor, Gemini CLI and the OpenAI Agents SDK get the same rules,
-skills and agents in their own layouts, generated from one source.
-[Other AI systems](PORTABILITY.md) says what each one reads and what it cannot do.
