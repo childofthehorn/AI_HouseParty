@@ -1,4 +1,4 @@
-# House Rules — the file set from the talk
+# House Rules — the file set from AI SLOP PARTY - https://bit.ly/ai_houseparty_slides
 
 Everything promised on the last slide of *The AI Slop Party*, plus the agents,
 skills and team memory that work inside it. Copy what you need; none of it is
