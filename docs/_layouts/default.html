@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{{ page.title }} · {{ site.title }}</title>
+  <meta name="description" content="{{ site.description }}">
+  <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}">
+  <script type="module" src="{{ '/assets/site.js' | relative_url }}"></script>
+</head>
+<body data-repo="https://github.com/{{ site.repository }}" data-branch="main" data-source="{{ page.path }}">
+  <a class="skip-link" href="#content">Skip to content</a>
+
+  <header class="site-header">
+    <div class="site-header__brand">
+      <a class="site-title" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+      <p class="site-tagline">{{ site.description }}</p>
+    </div>
+    <a class="site-source" href="https://github.com/{{ site.repository }}">Source on GitHub</a>
+  </header>
+
+  <nav class="site-nav" aria-label="Site">
+    <ul>
+      {% for item in site.nav %}
+      <li><a href="{{ item.url | relative_url }}">{{ item.title }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+
+  <main id="content">{{ content }}</main>
+
+  <footer class="site-footer">
+    <p><a href="https://github.com/{{ site.repository }}">{{ site.repository }}</a></p>
+    <p>Built from the repository's own markdown by GitHub Pages.</p>
+  </footer>
+</body>
+</html>

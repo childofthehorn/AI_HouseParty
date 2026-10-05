@@ -1,0 +1,294 @@
+/* House Rules site. One file, no build step, no fonts to download. */
+
+:root {
+  color-scheme: light dark;
+  --bg: #fdf8f1;
+  --surface: #f3e9db;
+  --text: #24190f;
+  --muted: #5e5146;
+  --accent: #b23a0c;
+  --border: #d8c9b6;
+  --measure: 70ch;
+  --space: clamp(1rem, 0.75rem + 1vw, 1.5rem);
+  --radius: 6px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* Every pair was checked: text and muted pass 7:1, accent passes 4.5:1 on both surfaces. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1511;
+    --surface: #27201a;
+    --text: #f4ece1;
+    --muted: #bdae9d;
+    --accent: #ff9f5a;
+    --border: #4b3f34;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-family: var(--font);
+  font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header, nav, main and footer share one centred column so nothing jogs sideways between them. */
+.site-header, .site-nav, #content, .site-footer {
+  width: min(var(--measure), 100% - 2 * var(--space));
+  margin-inline: auto;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: from-font;
+  text-underline-offset: 0.15em;
+}
+
+a:hover { text-decoration-thickness: 2px; }
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: var(--space);
+  inset-block-start: -100%;
+  padding: 0.5em 1em;
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: 0 0 var(--radius) var(--radius);
+  z-index: 1;
+}
+
+.skip-link:focus { inset-block-start: 0; }
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem var(--space);
+  padding-block: var(--space) 0.5rem;
+}
+
+.site-title {
+  font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.6rem);
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.site-title:hover { color: var(--accent); }
+
+.site-tagline, .site-source {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.site-nav {
+  border-block: 1px solid var(--border);
+  margin-block: 0.5rem var(--space);
+}
+
+.site-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-nav a {
+  display: inline-block;
+  padding: 0.5rem 0.6rem;
+  color: var(--text);
+  text-decoration: none;
+  border-block-end: 3px solid transparent;
+}
+
+.site-nav a:hover { color: var(--accent); }
+
+.site-nav a[aria-current="page"] {
+  color: var(--accent);
+  border-block-end-color: var(--accent);
+  font-weight: 600;
+}
+
+#content {
+  flex: 1;
+  padding-block-end: calc(2 * var(--space));
+}
+
+h1, h2, h3, h4 {
+  line-height: 1.2;
+  margin-block: 1.6em 0.5em;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
+  margin-block-start: 0.5em;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 1.15rem + 0.9vw, 1.8rem);
+  padding-block-end: 0.2em;
+  border-block-end: 1px solid var(--border);
+}
+
+h3 { font-size: clamp(1.1rem, 1rem + 0.5vw, 1.35rem); }
+
+p, ul, ol { margin-block: 0 1em; }
+li + li { margin-block-start: 0.25em; }
+img, svg { max-width: 100%; height: auto; }
+
+hr {
+  border: 0;
+  border-block-start: 1px solid var(--border);
+  margin-block: 2em;
+}
+
+blockquote {
+  margin-inline: 0;
+  padding-inline-start: 1em;
+  border-inline-start: 4px solid var(--border);
+  color: var(--muted);
+}
+
+code, kbd, pre {
+  font-family: var(--mono);
+  font-size: 0.9em;
+}
+
+code {
+  padding: 0.1em 0.3em;
+  background: var(--surface);
+  border-radius: 3px;
+}
+
+pre {
+  position: relative;
+  margin-block: 0 1em;
+  padding: 0.9em 1em;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  line-height: 1.45;
+}
+
+pre code { padding: 0; background: none; font-size: inherit; }
+
+.highlight .c, .highlight .c1, .highlight .cm { color: var(--muted); }
+.highlight .k, .highlight .kd, .highlight .nt { color: var(--accent); }
+
+/* site.js adds a Copy button inside each code block. */
+.copy {
+  position: absolute;
+  inset-block-start: 0.4em;
+  inset-inline-end: 0.4em;
+  padding: 0.2em 0.6em;
+  font: inherit;
+  font-size: 0.8em;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.copy:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Mermaid source reads as a code block until an SVG is actually in it; a failed render keeps the box. */
+.mermaid:has(svg) {
+  padding: 0;
+  background: none;
+  border: 0;
+  text-align: center;
+}
+
+.mermaid svg {
+  display: block;
+  margin-inline: auto;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Wide tables scroll inside their own box instead of widening the page. */
+table {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  margin-block: 0 1em;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+
+th, td {
+  padding: 0.45em 0.7em;
+  border: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+th { background: var(--surface); }
+
+details {
+  margin-block: 0 1em;
+  padding: 0.5em 1em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+details[open] { padding-block-end: 0.25em; }
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding-block: 0.25em;
+}
+
+.site-footer {
+  padding-block: var(--space);
+  border-block-start: 1px solid var(--border);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.site-footer p { margin-block: 0 0.25em; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none;
+    transition: none;
+    scroll-behavior: auto;
+  }
+}
+
+@media print {
+  .skip-link, .site-nav, .site-source, .copy { display: none; }
+  body { background: #fff; color: #000; }
+  a { color: #000; }
+  #content a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 0.85em; }
+  pre, table, details, .mermaid { break-inside: avoid; }
+  table { display: table; width: auto; }
+}

@@ -1,0 +1,65 @@
+name: pages
+
+# The documentation site. Built from the repository's own markdown on every PR
+# (as a check) and deployed from main. Enable Pages once with
+#   gh api -X POST repos/OWNER/REPO/pages -f build_type=workflow
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - "docs/**"
+      - "*.md"
+      - "platform/**"
+      - "adr/**"
+      - "agents/README.md"
+      - "skills/README.md"
+      - "scripts/build-site.sh"
+      - ".github/workflows/pages.yml"
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Assemble the site source
+        run: scripts/build-site.sh _site_src
+      - name: Build with the GitHub Pages Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./_site_src
+          destination: ./_site
+      - name: Every nav page exists
+        run: |
+          set -euo pipefail
+          for p in index README AGENTS platform adr agents skills PORTABILITY ASSUMPTIONS; do
+            if [ "$p" = index ]; then f=_site/index.html; else f="_site/$p/index.html"; fi
+            [ -f "$f" ] || { echo "::error::missing page $f"; exit 1; }
+          done
+          echo "$(find _site -name '*.html' | wc -l) pages built"
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./_site
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

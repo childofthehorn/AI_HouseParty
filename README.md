@@ -8,6 +8,11 @@ clever, which is the point.
 Rooms say how much damage a change can do. Gates make a PR prove it belongs in
 the room it touches. Agents follow the same rules as the people.
 
+**Website:** <https://childofthehorn.github.io/AI_SlopParty/> is these same
+files, rendered. `docs/` holds only the shell (a layout, a stylesheet, one JS
+file, a landing page); `.github/workflows/pages.yml` builds the site from the
+markdown on every PR and deploys it from `main`.
+
 ## Contents
 
 - [How it fits together](#how-it-fits-together)
@@ -223,6 +228,9 @@ scripts/branch-protection.sh           branch protection as code
 scripts/setup-labels.sh                create the labels in .github/labels.yml
 scripts/collect-repo-context.sh        run in your repo; dumps stacks and config needed to specialise
 scripts/export-agents.py               generate the other runtimes' layouts from agents/ and skills/ (--check)
+scripts/build-site.sh                  assemble the website source from this markdown (GitHub runs Jekyll)
+docs/                                  the website shell: _layouts/, assets/site.css, assets/site.js, index.md
+.github/workflows/pages.yml              build the site on every PR, deploy it from main
 .editorconfig  config/detekt/detekt.yml  .swiftformat  .swiftlint.yml  .gitleaks.toml
 
 agents/                                41 agents by domain + link_agents.sh (see agents/README.md)
