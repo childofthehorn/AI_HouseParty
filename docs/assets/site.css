@@ -34,7 +34,7 @@
   --bg: #FFF3DC;
   --bg-2: #FFEFC7;
   --ink: #15171D;
-  /* The deck's tan #9A8B72 is 3.0:1 on cream; this one is 5.1:1. */
+  /* Border of inline code; the deck's tan is too faint next to cream. */
   --ink-muted: #75664E;
   --line: #15171D;
   --panel: #1E2430;
@@ -183,7 +183,8 @@ h1, h2, h3, th, summary, .eyebrow, .site-title, .site-source, .site-nav a, .skip
 h1, h2, h3 { line-height: 1.05; margin-block: 1.4em 0.5em; text-wrap: balance; }
 h1 { font-size: clamp(2.75rem, 2.1rem + 2.6vw, 4.25rem); margin-block-start: 0.3em; }
 h2 { font-size: clamp(2rem, 1.6rem + 1.5vw, 2.75rem); }
-h3 { font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.8rem); }
+/* Never below 24px: the room bands set ink on the deck red, which only passes as large text. */
+h3 { font-size: clamp(1.5rem, 1.25rem + 0.8vw, 1.8rem); }
 h4 { font-size: 1.05rem; margin-block: 1.4em 0.4em; }
 
 h1::after, h2::after {
@@ -329,6 +330,7 @@ details[open] summary { margin-block-end: 0.75em; border-block-end: 2px solid va
   display: grid;
   grid-template-rows: auto 1fr;
   overflow: hidden;
+  background: var(--bg-2);   /* fallback where color-mix() is unsupported */
   background: color-mix(in srgb, var(--room) 30%, var(--bg));
   border: 2px solid var(--line);
   border-radius: var(--radius);
@@ -356,7 +358,10 @@ details[open] summary { margin-block-end: 0.75em; border-block-end: 2px solid va
 .room--garage { --room: var(--room-garage); }
 .room--driveway { --room: var(--room-driveway); }
 .room--safe-room { --room: var(--room-safe-room); grid-column: 1 / -1; color: var(--panel-ink); background: var(--panel); }
-.room--safe-room .room__head { color: var(--panel-ink); }
+.room--safe-room .room__head { color: var(--panel-ink); border-block-end-color: var(--panel-ink); }
+
+/* Bebas is caps-only; file names in table headers keep their case. */
+th code { text-transform: none; }
 
 .site-footer {
   padding: var(--space) var(--gutter);

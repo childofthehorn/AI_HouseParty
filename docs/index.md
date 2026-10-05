@@ -5,7 +5,6 @@ permalink: /
 
 <section class="hero">
   <div>
-    <p class="eyebrow">Hosting the AI Slop Party</p>
     <h1>House Rules</h1>
     <p class="lede">Shoes off. Apron on.</p>
     <ul>
@@ -32,19 +31,19 @@ Every path in the repo lives in a room. The room sets the gate.
 
 <div class="grid">
   <article class="room room--kitchen">
-    <div class="room__head"><img src="{{ '/assets/img/room-kitchen.png' | relative_url }}" width="480" height="446" alt="A chef's knife and a flame."><h3>Kitchen</h3></div>
+    <div class="room__head"><img src="{{ '/assets/img/room-kitchen.png' | relative_url }}" width="112" height="104" alt=""><h3>Kitchen</h3></div>
     <div class="room__body"><p>Money paths. Auth. Anything regulated.</p><p>No unsupervised guests. Ever. Two-key changes.</p></div>
   </article>
   <article class="room room--living-room">
-    <div class="room__head"><img src="{{ '/assets/img/room-living-room.png' | relative_url }}" width="480" height="446" alt="A television with a crowd watching."><h3>Living Room</h3></div>
+    <div class="room__head"><img src="{{ '/assets/img/room-living-room.png' | relative_url }}" width="112" height="104" alt=""><h3>Living Room</h3></div>
     <div class="room__body"><p>Core product. The game's on in here.</p><p>Normal review, normal gates. Everybody sees it break.</p></div>
   </article>
   <article class="room room--garage">
-    <div class="room__head"><img src="{{ '/assets/img/room-garage.png' | relative_url }}" width="480" height="446" alt="A padlocked garage door."><h3>Garage</h3></div>
+    <div class="room__head"><img src="{{ '/assets/img/room-garage.png' | relative_url }}" width="112" height="104" alt=""><h3>Garage</h3></div>
     <div class="room__body"><p>Prototypes, spikes, weird ideas. Go nuts.</p><p>One rule: the garage door stays shut.</p></div>
   </article>
   <article class="room room--driveway">
-    <div class="room__head"><img src="{{ '/assets/img/room-driveway.png' | relative_url }}" width="480" height="446" alt="A car with a parking ticket on it."><h3>Driveway</h3></div>
+    <div class="room__head"><img src="{{ '/assets/img/room-driveway.png' | relative_url }}" width="112" height="104" alt=""><h3>Driveway</h3></div>
     <div class="room__body"><p>Dashboards, scripts, Thursday's analysis.</p><p>Zero gates. Mandatory expiry. 90 days, then it gets towed.</p></div>
   </article>
   <article class="room room--safe-room">
