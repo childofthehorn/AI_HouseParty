@@ -1,4 +1,6 @@
-# House Rules — the file set from AI SLOP PARTY - https://bit.ly/ai_houseparty_slides
+# House Rules — the file set from the AI Slop Party
+
+**Slides:** <https://bit.ly/ai_houseparty_slides>
 
 Everything promised on the last slide of *The AI Slop Party*, plus the agents,
 skills and team memory that work inside it. Copy what you need; none of it is
@@ -234,7 +236,7 @@ scripts/setup-labels.sh                create the labels in .github/labels.yml (
 scripts/collect-repo-context.sh        run in your repo; dumps stacks and config needed to specialise
 scripts/export-agents.py               generate the other runtimes' layouts from agents/ and skills/ (--check)
 scripts/build-site.sh                  assemble the website source from this markdown (GitHub runs Jekyll)
-docs/                                  the website shell: _layouts/, assets/site.css, assets/site.js, index.md
+docs/                                  the website shell: _layouts/, assets/ (site.css, site.js, the talk's illustrations, OFL fonts), index.md
 .github/workflows/pages.yml              build the site on every PR, deploy it from main
 .editorconfig  config/detekt/detekt.yml  .swiftformat  .swiftlint.yml  .gitleaks.toml
 
