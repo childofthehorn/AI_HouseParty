@@ -41,7 +41,7 @@ jobs:
       - name: Every nav page exists
         run: |
           set -euo pipefail
-          for p in index README AGENTS platform adr agents skills PORTABILITY ASSUMPTIONS; do
+          for p in index README house-rules platform adr agents skills PORTABILITY ASSUMPTIONS; do
             if [ "$p" = index ]; then f=_site/index.html; else f="_site/$p/index.html"; fi
             [ -f "$f" ] || { echo "::error::missing page $f"; exit 1; }
           done

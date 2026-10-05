@@ -31,7 +31,8 @@ add_page() {
 }
 
 add_page README.md
-add_page AGENTS.md
+# /AGENTS/ would differ from /agents/ only by case; a trap on case-insensitive disks.
+add_page AGENTS.md /house-rules/
 add_page PORTABILITY.md
 add_page ASSUMPTIONS.md
 add_page STYLE-RULES-TO-FILL.md
