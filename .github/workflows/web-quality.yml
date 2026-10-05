@@ -34,11 +34,23 @@ jobs:
       # Full history: the diff checks below need the merge base with the base branch.
       - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
+      # A .js change outside any web package (a docs site script, a config) still gets the
+      # house rules below, but there is no toolchain to install or run.
+      - name: Web package present?
+        id: pkg
+        run: |
+          if [ -f package.json ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No package.json in $(pwd); skipping install, lint, types, format and tests."
+          fi
+
       - uses: actions/setup-node@v7
+        if: steps.pkg.outputs.present == 'true'
         with:
           node-version-file: .nvmrc   # FILL IN: webApp/.nvmrc to match working-directory
 
       - name: One lockfile, then install
+        if: steps.pkg.outputs.present == 'true'
         run: |
           set -euo pipefail
           LOCKS=$(ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null || true)
@@ -60,6 +72,7 @@ jobs:
           echo "PM=$PM" >> "$GITHUB_ENV"
 
       - name: Required scripts exist
+        if: steps.pkg.outputs.present == 'true'
         run: |
           set -euo pipefail
           NEED="lint format:check test"
@@ -74,12 +87,16 @@ jobs:
           fi
 
       - name: Lint
+        if: steps.pkg.outputs.present == 'true'
         run: $PM run lint
       - name: Types
+        if: steps.pkg.outputs.present == 'true'
         run: '[ ! -f tsconfig.json ] || $PM run typecheck'
       - name: Format
+        if: steps.pkg.outputs.present == 'true'
         run: $PM run format:check
       - name: Tests
+        if: steps.pkg.outputs.present == 'true'
         run: $PM test
 
       - name: House rules on added lines
