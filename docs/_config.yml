@@ -4,8 +4,8 @@
 title: House Rules
 description: The file set from The AI Slop Party. Rooms by blast radius, gates at the door, and agents that read the fridge.
 url: https://childofthehorn.github.io
-baseurl: /AI_SlopParty
-repository: childofthehorn/AI_SlopParty
+baseurl: /AI_HouseParty
+repository: childofthehorn/AI_HouseParty
 
 markdown: kramdown
 kramdown:

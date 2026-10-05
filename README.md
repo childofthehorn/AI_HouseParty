@@ -8,7 +8,7 @@ clever, which is the point.
 Rooms say how much damage a change can do. Gates make a PR prove it belongs in
 the room it touches. Agents follow the same rules as the people.
 
-**Website:** <https://childofthehorn.github.io/AI_SlopParty/> is these same
+**Website:** <https://childofthehorn.github.io/AI_HouseParty/> is these same
 files, rendered. `docs/` holds only the shell (a layout, a stylesheet, one JS
 file, a landing page); `.github/workflows/pages.yml` builds the site from the
 markdown on every PR and deploys it from `main`.
