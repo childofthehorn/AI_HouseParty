@@ -1,0 +1,109 @@
+name: driveway sweep
+
+# ADR-0002: everything in the driveway gets towed. This is the tow truck.
+# Finds files from merged PRs the room labeler marked room/driveway whose
+# declared expiry (or merge date + 90 days) has passed, and opens one PR that
+# deletes them. It never pushes to main: towing still goes through review.
+#
+# A PR opened with the default GITHUB_TOKEN does not trigger other workflows,
+# so its required checks never run. Set a SWEEP_TOKEN secret (GitHub App token
+# with contents + pull-requests write) to get a reviewable tow PR.
+on:
+  schedule:
+    - cron: "0 14 * * 1"     # Mondays, 14:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "List what would be towed without opening a PR"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: driveway-sweep
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.SWEEP_TOKEN || github.token }}
+
+      - name: Find expired Driveway files
+        id: plan
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const root = process.env.GITHUB_WORKSPACE;
+            const house = require(`${root}/.github/house/house.js`);
+            const config = require(`${root}/.github/house/rooms.config.js`);
+
+            const tow = await house.runSweepPlan({ github, context, core }, config, {
+              exists: (f) => fs.existsSync(path.join(root, f)),
+            });
+            fs.writeFileSync('/tmp/tow.txt', tow.map((t) => t.file).join('\n') + (tow.length ? '\n' : ''));
+            fs.writeFileSync('/tmp/tow.md', tow.map((t) => `- \`${t.file}\` — expired ${t.expiry} (from #${t.pr})`).join('\n') + '\n');
+            core.setOutput('count', String(tow.length));
+            await core.summary.addHeading('Driveway sweep').addRaw(tow.length ? fs.readFileSync('/tmp/tow.md', 'utf8') : 'Nothing to tow.').write();
+
+      - name: Open or refresh the tow PR
+        if: steps.plan.outputs.count != '0' && inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ secrets.SWEEP_TOKEN || github.token }}
+          BRANCH: driveway/tow
+          GIT_LITERAL_PATHSPECS: "1"
+        run: |
+          set -euo pipefail
+          git config user.name "driveway-sweep"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$BRANCH"
+          git rm --quiet --pathspec-from-file=/tmp/tow.txt
+          git commit --quiet -m "Tow expired Driveway files ($(date -u +%Y-%m-%d))"
+          git push --force origin "$BRANCH"
+
+          # Two weeks to claim (promote or renew) before the tow PR merges. See ADR-0002.
+          EXPIRY=$(date -u -d '+14 days' +%Y-%m-%d)
+          {
+            echo "## What and why"
+            echo
+            echo "Driveway sweep. These files came from Driveway PRs whose expiry has passed. Merging this PR tows them."
+            echo
+            cat /tmp/tow.md
+            echo
+            echo "To keep a file: **promote** it into a real room with an owner and tests, or **renew** it with a new Driveway PR that touches it and states a new expiry. Then re-run this workflow."
+            echo
+            echo "## Room"
+            echo
+            echo "- [ ] Kitchen"
+            echo "- [ ] Living Room"
+            echo "- [ ] Garage"
+            echo "- [x] Driveway — throwaway, has an expiry date below"
+            echo
+            echo "Expiry (Driveway only): \`$EXPIRY\`"
+            echo
+            echo "## Provenance"
+            echo
+            echo "Tool / model: \`driveway-sweep workflow\` — generated, no model involved."
+          } > /tmp/body.md
+
+          PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$PR" ]; then
+            gh pr edit "$PR" --body-file /tmp/body.md
+          else
+            gh pr create --base "${{ github.event.repository.default_branch }}" --head "$BRANCH" \
+              --title "Driveway sweep - $(date -u +%Y-%m-%d)" --body-file /tmp/body.md
+          fi
+
+      - name: Label the tow PR
+        if: steps.plan.outputs.count != '0' && inputs.dry_run != true
+        env:
+          # Labels via GITHUB_TOKEN do not fire `labeled`, so the label guard leaves them alone.
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr edit driveway/tow --add-label room/driveway,driveway-sweep

@@ -1,0 +1,77 @@
+# swiftlint --strict
+included:
+  - iosApp
+  - Sources
+
+excluded:
+  - .build
+  - DerivedData
+  - "**/Generated"
+  - "**/*.generated.swift"
+
+disabled_rules:
+  - todo                      # TODOs allowed if they carry a ticket
+  - trailing_whitespace       # swiftformat owns whitespace
+
+opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - empty_count
+  - closure_spacing
+  - explicit_init
+  - first_where
+  - last_where
+  - redundant_nil_coalescing
+  - unused_import
+  - private_action
+  - private_outlet
+  - prohibited_super_call
+  - overridden_super_call
+
+force_cast: error
+force_try: error
+force_unwrapping: error
+implicitly_unwrapped_optional: error
+
+line_length:
+  warning: 120
+  error: 160
+  ignores_comments: true
+  ignores_urls: true
+
+file_length:
+  warning: 300
+  error: 500
+
+type_body_length:
+  warning: 250
+  error: 400
+
+function_body_length:
+  warning: 60
+  error: 100
+
+cyclomatic_complexity:
+  warning: 12
+  error: 20
+
+identifier_name:
+  min_length: 2
+  excluded: [id, x, y, ok, to, up]
+
+custom_rules:
+  no_print:
+    name: "print() in shipping code"
+    regex: 'print\('
+    message: "Use the logger, not print()."
+    severity: error
+  singleton_shared:
+    name: "new singleton"
+    regex: 'static\s+let\s+shared\s*='
+    message: "No new singletons. Inject it."
+    severity: warning
+  main_thread_hop:
+    name: "DispatchQueue.main hop"
+    regex: 'DispatchQueue\.main\.async'
+    message: "Mark the type @MainActor instead of hopping manually."
+    severity: warning

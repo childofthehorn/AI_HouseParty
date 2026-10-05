@@ -1,0 +1,25 @@
+# Labels the workflows depend on. Apply with scripts/setup-labels.sh
+- name: driveway-sweep
+  color: "C5DEF5"
+  description: "Driveway tow PR opened by the sweep"
+- name: room/kitchen
+  color: "B60205"
+  description: "Money, auth, regulated, shared contracts"
+- name: room/living-room
+  color: "1D76DB"
+  description: "Core product"
+- name: room/garage
+  color: "FBCA04"
+  description: "Spike or prototype, not shipping"
+- name: room/driveway
+  color: "5319E7"
+  description: "Throwaway, has an expiry date"
+- name: room/safe-room
+  color: "000000"
+  description: "Cryptography, secure storage, key material. The only label a person may add"
+- name: chore/format
+  color: "EDEDED"
+  description: "Formatting only; no behaviour change"
+- name: ai-generated
+  color: "D4C5F9"
+  description: "Majority of the diff was model-generated"

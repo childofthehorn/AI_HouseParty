@@ -1,0 +1,88 @@
+name: swift quality
+
+# Every Swift file: format, lint, house rules, and `swift test` for packages.
+# The iOS app build and SwiftUI/UIKit checks are in ios-quality.yml.
+on:
+  pull_request:
+    paths: ["**/*.swift", "**/Package.swift", "**/Package.resolved", ".swiftformat", ".swiftlint.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: macos-15   # Xcode 16: Swift 6 and the iPhone 16 simulator
+    env:
+      BASE_REF: ${{ github.base_ref }}
+    steps:
+      # Full history: the diff check below needs the merge base with the base branch.
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+
+      - name: Tooling
+        run: |
+          brew install swiftformat swiftlint
+
+      - name: Format check
+        run: swiftformat --lint .
+
+      - name: Lint
+        run: swiftlint --strict
+
+      - name: House rules on added lines
+        run: |
+          set -euo pipefail
+          ADDED=$(git diff -U0 --no-color "origin/$BASE_REF...HEAD" -- '*.swift' \
+            | awk '/^\+\+\+ /{f=substr($0,7); next} /^\+/{print f": "substr($0,2)}' \
+            | grep -vE '^[^:]*(Tests?/|Tests?\.swift:|Spec\.swift:)' || true)
+          # Same lines with string contents and // comments removed.
+          CODE=$(printf '%s\n' "$ADDED" | sed -E 's/"[^"]*"/""/g; s#//.*$##')
+          FAIL=0
+          # A `!` right after a name, `)` or `]` and not followed by `=` is a force unwrap or an IUO.
+          if printf '%s\n' "$CODE" | grep -E '(try!|as!|[]A-Za-z0-9_)]!([^=]|$))'; then
+            echo "::error::Force unwrap or force cast added outside tests. Use guard let / throw instead."
+            FAIL=1
+          fi
+          if printf '%s\n' "$ADDED" | grep -E '(@unchecked Sendable|nonisolated\(unsafe\))' | grep -v '//'; then
+            echo "::error::@unchecked Sendable / nonisolated(unsafe) added without a comment saying why it is safe."
+            FAIL=1
+          fi
+          if printf '%s\n' "$ADDED" | grep -E '\.package\(.*(branch|revision):'; then
+            echo "::error::Package pinned to a branch or revision. Use from: a version."
+            FAIL=1
+          fi
+          exit "$FAIL"
+
+  packages:
+    runs-on: macos-15   # Xcode 16: Swift 6 and the iPhone 16 simulator
+    steps:
+      - uses: actions/checkout@v7
+      - name: swift test, every package
+        run: |
+          set -euo pipefail
+          git ls-files 'Package.swift' '*/Package.swift' | while read -r manifest; do
+            dir=$(dirname "$manifest")
+            # iOS-only packages cannot build for the macOS host; xcodebuild covers them.
+            if grep -q '\.iOS' "$manifest" && ! grep -q '\.macOS' "$manifest"; then
+              echo "skip $dir (iOS-only)"
+              continue
+            fi
+            echo "::group::swift test $dir"
+            swift test --package-path "$dir" </dev/null
+            echo "::endgroup::"
+          done
+
+  linux:
+    # Server and CLI packages must build on Linux. FILL IN the package directories
+    # as a repository variable, space separated (e.g. "server tools/cli").
+    if: vars.SWIFT_LINUX_PACKAGES != ''
+    runs-on: ubuntu-latest
+    container: swift:6.1   # FILL IN: match your toolchain
+    env:
+      PACKAGES: ${{ vars.SWIFT_LINUX_PACKAGES }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: swift test on Linux
+        run: |
+          set -eu
+          for dir in $PACKAGES; do swift test --package-path "$dir"; done

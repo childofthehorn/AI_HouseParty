@@ -1,0 +1,122 @@
+name: web quality
+
+# JavaScript, TypeScript and React. Lint, types, format and tests come from the
+# package's own scripts; the house rules below run on added lines only.
+on:
+  pull_request:
+    paths:
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.mjs"
+      - "**/*.cjs"
+      - "**/package.json"
+      - "**/package-lock.json"
+      - "**/pnpm-lock.yaml"
+      - "**/yarn.lock"
+      - "**/tsconfig*.json"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .   # FILL IN: webApp if the web app is not at the repo root
+    env:
+      BASE_REF: ${{ github.base_ref }}
+    steps:
+      # Full history: the diff checks below need the merge base with the base branch.
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc   # FILL IN: webApp/.nvmrc to match working-directory
+
+      - name: One lockfile, then install
+        run: |
+          set -euo pipefail
+          LOCKS=$(ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null || true)
+          if [ "$(printf '%s\n' "$LOCKS" | grep -c .)" -ne 1 ]; then
+            echo "::error::Expected exactly one lockfile, found: ${LOCKS:-none}"
+            exit 1
+          fi
+          case "$LOCKS" in
+            pnpm-lock.yaml) PM=pnpm ;;
+            yarn.lock)      PM=yarn ;;
+            *)              PM=npm ;;
+          esac
+          if [ "$PM" != npm ]; then npm install -g corepack@latest && corepack enable; fi
+          case "$PM" in
+            pnpm) pnpm install --frozen-lockfile ;;
+            yarn) if yarn --version | grep -q '^1\.'; then yarn install --frozen-lockfile; else yarn install --immutable; fi ;;
+            npm)  npm ci ;;
+          esac
+          echo "PM=$PM" >> "$GITHUB_ENV"
+
+      - name: Required scripts exist
+        run: |
+          set -euo pipefail
+          NEED="lint format:check test"
+          [ -f tsconfig.json ] && NEED="$NEED typecheck"
+          MISSING=""
+          for s in $NEED; do
+            node -e "process.exit(require('./package.json').scripts?.[process.argv[1]] ? 0 : 1)" "$s" || MISSING="$MISSING $s"
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::package.json is missing scripts:$MISSING. A gate that does not run is not a gate."
+            exit 1
+          fi
+
+      - name: Lint
+        run: $PM run lint
+      - name: Types
+        run: '[ ! -f tsconfig.json ] || $PM run typecheck'
+      - name: Format
+        run: $PM run format:check
+      - name: Tests
+        run: $PM test
+
+      - name: House rules on added lines
+        run: |
+          set -euo pipefail
+          # Prints "path: line" for every added line in non-test JS/TS.
+          ADDED=$(git diff -U0 --no-color "origin/$BASE_REF...HEAD" -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' '*.cjs' \
+            | awk '/^\+\+\+ /{f=substr($0,7); next} /^\+/{print f": "substr($0,2)}' \
+            | grep -vE '^[^:]*(__tests__/|\.(test|spec|stories)\.[cm]?[jt]sx?:|\.d\.ts:)' || true)
+          # Same lines with string contents and // comments removed, for rules about code rather than comments.
+          CODE=$(printf '%s\n' "$ADDED" | sed -E "s/\"[^\"]*\"/\"\"/g; s/'[^']*'/''/g; s/\`[^\`]*\`/\`\`/g; s#//.*\$##")
+          FAIL=0
+          check() { # level, pattern, message, [pattern that excuses a hit], [input: ADDED (default) or CODE]
+            SRC=$ADDED; [ "${5:-}" = CODE ] && SRC=$CODE
+            HITS=$(printf '%s\n' "$SRC" | grep -E "$2" | grep -vE "${4:-^$}" || true)
+            [ -z "$HITS" ] && return 0
+            printf '%s\n' "$HITS"
+            echo "::$1::$3"
+            [ "$1" = error ] && FAIL=1
+            return 0
+          }
+          check error   '@ts-(ignore|nocheck)'                       "@ts-ignore / @ts-nocheck added. Fix the type, or @ts-expect-error with a reason."
+          check error   '\.tsx?: .*([:,<][[:space:]]*any([^A-Za-z0-9_]|$)|[[:space:]]as[[:space:]]+any([^A-Za-z0-9_]|$))' "'any' added. Use unknown and narrow." '' CODE
+          check error   'eslint-disable([[:space:]]|\*|$)'          "File- or block-wide eslint-disable added. Scope it to one line."
+          check error   'eslint-disable-(next-)?line'                "eslint-disable without a reason. Add '-- reason'." '[[:space:]]--[[:space:]]'
+          check warning 'console\.log\('                               "console.log in shipped code. Use the logger." '' CODE
+          check warning 'dangerouslySetInnerHTML'                      "dangerouslySetInnerHTML added. Say in the PR where the input is sanitized." '' CODE
+          exit "$FAIL"
+
+      - name: Dependency change ships with its lockfile
+        run: |
+          set -euo pipefail
+          # Dependency-shaped lines: "name": "^1.2.3" etc. Keys like engines.node and version look alike; skip them.
+          DEPS=$(git diff -U0 "origin/$BASE_REF...HEAD" -- '*package.json' \
+            | grep -E '^[+-][[:space:]]*"[^"]+":[[:space:]]*"(\^|~|[0-9]|workspace:|npm:)' \
+            | grep -vE '^[+-][[:space:]]*"(version|name|type|private|main|module|types|license|packageManager|node|npm|pnpm|yarn|bun)":' || true)
+          LOCK=$(git diff --name-only "origin/$BASE_REF...HEAD" -- '*package-lock.json' '*pnpm-lock.yaml' '*yarn.lock')
+          if [ -n "$DEPS" ] && [ -z "$LOCK" ]; then
+            printf '%s\n' "$DEPS"
+            echo "::error::package.json dependencies changed with no lockfile change. Run install and commit the lockfile."
+            exit 1
+          fi

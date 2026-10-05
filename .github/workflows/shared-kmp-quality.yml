@@ -1,0 +1,89 @@
+name: shared (kmp) quality
+
+# shared/ is Kitchen. Kotlin that compiles for Android can still break Swift,
+# so the iOS framework link runs on every shared change. Lint and tests run in
+# jvm-quality.yml (./gradlew check).
+on:
+  pull_request:
+    paths:
+      - "shared/**"
+      - "gradle/libs.versions.toml"
+      - "build-logic/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  common:
+    runs-on: ubuntu-latest
+    env:
+      BASE_REF: ${{ github.base_ref }}
+    steps:
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+      - name: No platform APIs in commonMain
+        run: |
+          set -euo pipefail
+          BAD=$(grep -rInE '^\s*import\s+(android\.|androidx\.|java\.(io|nio|net|util\.concurrent)|platform\.|kotlinx\.cinterop)' \
+            shared/src/commonMain || true)
+          if [ -n "$BAD" ]; then
+            echo "$BAD"
+            echo "::error::Platform import in commonMain. Use expect/actual, or move the code to a platform source set."
+            exit 1
+          fi
+
+      - name: expect and actual land together
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$BASE_REF"
+          # Declarations only (not kotlin.test's expect(...) or comments), and only in commonMain.
+          DIFF=$(git diff "origin/$BASE_REF...HEAD" -- 'shared/src/commonMain/*' || true)
+          ADDED_EXPECT=$(echo "$DIFF" | grep -cE '^\+[[:space:]]*(public |internal )?expect[[:space:]]+(fun|class|object|val|var|interface)\b' || true)
+          TOUCHED=$(git diff --name-only "origin/$BASE_REF...HEAD" -- 'shared/src/*')
+          ADDED_ACTUAL_ANDROID=$(printf '%s\n' "$TOUCHED" | grep -cE '^shared/src/android[A-Za-z]*Main/' || true)
+          # iosMain, or an intermediate source set it inherits from (appleMain, nativeMain, darwinMain)
+          ADDED_ACTUAL_IOS=$(printf '%s\n' "$TOUCHED" | grep -cE '^shared/src/(ios|apple|native|darwin)[A-Za-z]*Main/' || true)
+          echo "new expect declarations: $ADDED_EXPECT (android*Main files touched: $ADDED_ACTUAL_ANDROID, ios/apple/native*Main: $ADDED_ACTUAL_IOS)"
+          if [ "$ADDED_EXPECT" -gt 0 ] && { [ "$ADDED_ACTUAL_ANDROID" -eq 0 ] || [ "$ADDED_ACTUAL_IOS" -eq 0 ]; }; then
+            echo "::error::New expect declaration without both actuals. Never merge half a pair."
+            exit 1
+          fi
+
+      - name: Wire contracts are explicitly named
+        run: |
+          set -euo pipefail
+          # @Serializable classes whose properties lack @SerialName are a rename away from a prod bug
+          FILES=$(git diff --name-only "origin/$BASE_REF...HEAD" -- 'shared/**/*.kt' || true)
+          [ -z "$FILES" ] && exit 0
+          for f in $FILES; do
+            [ -f "$f" ] || continue
+            if grep -q '@Serializable' "$f" && ! grep -q '@SerialName' "$f"; then
+              echo "::warning file=$f::@Serializable without any @SerialName. A property rename becomes a wire break."
+            fi
+          done
+
+
+  ios_framework:
+    runs-on: macos-15   # Xcode 16, same as the Swift workflows
+    env:
+      BASE_REF: ${{ github.base_ref }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: '21' }
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Link the iOS framework
+        run: ./gradlew --no-daemon :shared:linkDebugFrameworkIosSimulatorArm64
+
+      - name: Swift-facing API diff (informational)
+        run: |
+          set -euo pipefail
+          HEADER=$(find shared/build -name '*.h' -path '*Headers*' | head -1 || true)
+          if [ -n "$HEADER" ]; then
+            echo "Generated ObjC header: $HEADER"
+            grep -cE '^- \(|^\+ \(' "$HEADER" || true
+          fi
+          # FILL IN: cache the base branch header and post a diff so Swift-breaking
+          # changes are visible in review rather than at integration time.

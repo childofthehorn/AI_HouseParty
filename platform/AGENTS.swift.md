@@ -1,0 +1,65 @@
+# AGENTS.swift.md — Swift (any target)
+
+Additive to `../AGENTS.md`. Applies to every `.swift` file: iOS apps, Swift
+packages, server-side and CLI Swift. App rules (SwiftUI, UIKit, Xcode) are in
+`AGENTS.ios.md`.
+
+## Build and check
+
+```bash
+swiftformat --lint .                   # or: mint run swiftformat --lint .
+swiftlint --strict
+swift build && swift test              # any directory with a Package.swift
+```
+
+Formatting is not optional and not a follow-up PR.
+
+## Swift rules
+
+- No force unwrap (`!`) and no `try!` outside tests. Use `guard let`, or make the
+  failure explicit with a thrown error.
+- No `fatalError()` in shipping paths except genuinely unreachable switch
+  defaults, and then with a message.
+- `async`/`await` for new work. Do not add completion-handler APIs; wrap legacy
+  ones at the boundary.
+- UI-touching types are `@MainActor`. Do not sprinkle `DispatchQueue.main.async`
+  to paper over an actor mistake.
+- New modules build with Swift 6 strict concurrency. `@unchecked Sendable` and
+  `nonisolated(unsafe)` need a trailing comment saying why it is safe.
+- Value types by default. A `class` needs a reason (identity or reference
+  semantics), stated in the PR.
+- Strong-typed identifiers over raw `String`/`Int`, same reasoning as Kotlin.
+- No new singletons (`static let shared`). Inject.
+- Access is `internal` by default. `public` is a module's API and gets a `///`
+  doc comment on entry points only.
+- No `catch {}` that drops the error. Throw a typed domain error at module
+  boundaries.
+
+## Packages and dependencies
+
+- SPM only, declared in `Package.swift` / the project's package list. No new
+  CocoaPods.
+- Pin with `from:` (up to next major). No `branch:` or `revision:` dependencies
+  in shipped code.
+- `Package.resolved` changes are reviewed by Platform — the dependency gate will
+  flag them.
+
+## Server and CLI Swift
+
+- Linux is a target. Import `FoundationNetworking` where you use `URLSession`, and
+  run `swift test` on Linux in CI for server packages.
+- Request handlers stay thin, same as views: decode, call a service, encode.
+- Log with swift-log's `Logger`, never `print`.
+
+## Testing
+
+- Swift Testing (`@Test`, `#expect`) for new test files; XCTest where the target
+  already uses it. One framework per file.
+- A bug fix lands with a test that fails before the fix.
+
+## Anti-patterns seen in this repo
+
+<!-- FILL IN from your Swift style PRs. -->
+
+- `// swiftlint:disable` for a whole file where a single line was the problem.
+- Mixing Combine and async/await in one pipeline without a stated reason.

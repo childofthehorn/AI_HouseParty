@@ -1,0 +1,109 @@
+name: dependency gate
+
+# New dependencies are uninvited plus-ones. They come in through the door.
+on:
+  pull_request:
+    paths:
+      - "gradle/libs.versions.toml"
+      - "**/build.gradle"
+      - "**/build.gradle.kts"
+      - "settings.gradle.kts"
+      - "**/Package.swift"
+      - "**/Package.resolved"
+      - "**/Podfile"
+      - "**/Podfile.lock"
+      - "**/pom.xml"
+      - "**/package.json"
+      - "**/package-lock.json"
+      - "**/pnpm-lock.yaml"
+      - "**/yarn.lock"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Collect dependency changes
+        id: diff
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          BASE="origin/$BASE_REF"
+          git fetch --no-tags origin "$BASE_REF" || true
+
+          # Added coordinates in the Gradle version catalog
+          ADDED_KOTLIN=$(git diff "$BASE"...HEAD -- gradle/libs.versions.toml \
+            | grep -E '^\+' | grep -vE '^\+\+\+' \
+            | grep -E '(module|group)\s*=' || true)
+
+          # Added inline Gradle deps (these are also a style violation)
+          INLINE=$(git diff "$BASE"...HEAD -- 'build.gradle.kts' 'build.gradle' '**/build.gradle.kts' '**/build.gradle' \
+            | grep -E '^\+' | grep -vE '^\+\+\+' \
+            | grep -E '(implementation|api|ksp|kapt)\("[^"]+:[^"]+:[^"]+"\)' || true)
+
+          # Added SPM / Cocoapods entries
+          # Plain names too: a git pathspec '**/x' needs a literal '/', so it skips a root x.
+          ADDED_SWIFT=$(git diff "$BASE"...HEAD -- 'Package.swift' 'Package.resolved' 'Podfile' 'Podfile.lock' '**/Package.swift' '**/Package.resolved' '**/Podfile' '**/Podfile.lock' \
+            | grep -E '^\+' | grep -vE '^\+\+\+' \
+            | grep -E '(\.package\(|pod |"identity"|"location")' || true)
+
+          # Added Maven dependencies or plugins
+          ADDED_MAVEN=$(git diff "$BASE"...HEAD -- '**/pom.xml' 'pom.xml' \
+            | grep -E '^\+' | grep -vE '^\+\+\+' \
+            | grep -E '<artifactId>' || true)
+
+          # Added npm / pnpm / yarn dependencies ("name": "^1.2.3", workspace:, npm: aliases)
+          ADDED_JS=$(git diff "$BASE"...HEAD -- '**/package.json' 'package.json' \
+            | grep -E '^\+' | grep -vE '^\+\+\+' \
+            | grep -E '^\+[[:space:]]*"[^"]+":[[:space:]]*"(\^|~|[0-9]|workspace:|npm:|git|github:|file:|latest)' \
+            | grep -vE '^\+[[:space:]]*"(version|name|type|private|main|module|types|license|packageManager|node|npm|pnpm|yarn|bun)":' || true)
+
+          {
+            echo "kotlin<<EOF"; echo "$ADDED_KOTLIN"; echo "EOF"
+            echo "inline<<EOF";  echo "$INLINE";      echo "EOF"
+            echo "swift<<EOF";   echo "$ADDED_SWIFT"; echo "EOF"
+            echo "maven<<EOF";   echo "$ADDED_MAVEN"; echo "EOF"
+            echo "js<<EOF";      echo "$ADDED_JS";    echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Fail on inline Gradle coordinates
+        if: steps.diff.outputs.inline != ''
+        env:
+          INLINE: ${{ steps.diff.outputs.inline }}
+        run: |
+          echo "::error::Dependencies belong in gradle/libs.versions.toml, not inline in a module build file."
+          printf '%s\n' "$INLINE"
+          exit 1
+
+      # Sign-off is a Platform approval enforced by room-approval-gate ("Dependencies"
+      # rule in .github/house/rooms.config.js). Labels are automation-only.
+      - name: Ask the dependency questions
+        if: steps.diff.outputs.kotlin != '' || steps.diff.outputs.swift != '' || steps.diff.outputs.maven != '' || steps.diff.outputs.js != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC2016  # backticks are Markdown, not expansions
+          printf '%s\n' \
+            '**Dependency gate: a new guest showed up.**' \
+            '' \
+            'This PR adds or changes a dependency. Answer these in a comment before merge:' \
+            '' \
+            '1. What does it do that we cannot do with what we already have?' \
+            '2. License, maintenance status, last release date?' \
+            '3. Transitive footprint - what does it drag in?' \
+            '4. Size delta (Android APK/AAB, iOS IPA, web bundle, service image)?' \
+            '5. If it disappeared tomorrow, what is the exit?' \
+            '' \
+            'A Platform reviewer approves the PR once answered; `room-approval-gate` waits for that approval.' \
+            > /tmp/dep-comment.md
+          gh pr comment "$PR" --body-file /tmp/dep-comment.md

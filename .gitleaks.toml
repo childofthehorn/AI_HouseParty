@@ -1,0 +1,57 @@
+title = "house rules"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "android-keystore-password"
+description = "Keystore or signing password in a properties file"
+regex = "(?i)(store|key)(Password|Pwd)\\s*=\\s*['\"]?[^\\s'\"$]{6,}"
+tags = ["android", "signing"]
+
+[[rules]]
+id = "google-api-key"
+description = "Google API key"
+regex = "AIza[0-9A-Za-z\\-_]{35}"
+tags = ["google"]
+
+[[rules]]
+id = "github-pat"
+description = "GitHub personal access token"
+regex = "gh[pousr]_[A-Za-z0-9]{36,}"
+tags = ["github"]
+
+[[rules]]
+id = "apple-auth-key"
+description = "App Store Connect / APNs auth key"
+regex = "AuthKey_[A-Z0-9]{10}\\.p8"
+tags = ["ios", "signing"]
+
+[[rules]]
+id = "spring-datasource-password"
+description = "Database password in Spring config"
+regex = "(?i)spring\\.datasource\\.password\\s*[=:]\\s*['\"]?[^\\s'\"$]{6,}"
+tags = ["spring", "config"]
+
+[[rules]]
+id = "npm-auth-token"
+description = "Registry token in .npmrc"
+regex = "_authToken=[A-Za-z0-9_-]{20,}"
+tags = ["web", "npm"]
+
+[[rules]]
+id = "prod-host-hardcoded"
+description = "Hardcoded production host in source"
+regex = "(?i)https://(api|gateway|wallet|auth)[a-z0-9.-]*\\.(prod|production)\\.[a-z0-9.-]+"
+tags = ["config"]
+
+[allowlist]
+description = "Fixtures and docs that intentionally contain fake values"
+paths = [
+  '''(.*?)([Tt]ests?)/.*''',
+  '''(.*?)fixtures?/.*''',
+  '''(.*?)\.md$''',
+]
+regexes = [
+  '''EXAMPLE|SAMPLE|FAKE|dummy|placeholder|xxxx''',
+]

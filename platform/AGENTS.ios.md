@@ -1,0 +1,52 @@
+# AGENTS.ios.md — iOS apps: SwiftUI / UIKit / Xcode
+
+Additive to `../AGENTS.md` and `AGENTS.swift.md`. iOS app rules only.
+
+## Build and check
+
+```bash
+swiftformat --lint . && swiftlint --strict
+xcodebuild test -scheme App -destination 'platform=iOS Simulator,name=iPhone 16'
+```
+
+## SwiftUI rules
+
+- Views are small and take their data in. No networking in a `body`.
+- New design system components need a `#Preview` and must use tokens from the
+  shared style layer, not literal colors or spacings.
+- `@StateObject` at ownership, `@ObservedObject` when passed in. Getting this
+  backwards causes the bugs nobody can reproduce.
+- For `@Observable` types (iOS 17+): `@State` at ownership, a plain property when
+  passed in, `@Bindable` when the child needs bindings.
+- Async work tied to a view's lifetime goes in `.task {}`, which cancels on
+  disappear. Not `onAppear { Task { … } }`.
+
+## UIKit rules
+
+- A view controller owns layout and view lifecycle. Networking, persistence and
+  business logic live in a view model or service it is handed.
+- No new storyboards. New screens are programmatic UIKit, or SwiftUI hosted in a
+  `UIHostingController`. Existing storyboards stay until their screen is rebuilt.
+- Auto Layout via `NSLayoutConstraint.activate`, with
+  `translatesAutoresizingMaskIntoConstraints = false`. No frame math in
+  `layoutSubviews` without a measured reason.
+- Escaping closures that can outlive the controller capture `[weak self]`.
+  Delegates are `weak`.
+- New table and collection views use diffable data sources, not `reloadData()`
+  plus index bookkeeping.
+- Keep the bridges thin: `UIHostingController` for SwiftUI in UIKit,
+  `UIViewRepresentable` / `UIViewControllerRepresentable` for UIKit in SwiftUI.
+
+## Xcode project
+
+- Build settings live in `.xcconfig` files, not the project editor. `.xcconfig`
+  files are Kitchen.
+- Swift rules, dependencies and testing are in `AGENTS.swift.md`.
+
+## Anti-patterns seen in this repo
+
+<!-- FILL IN from your iOS style PRs. -->
+
+- Massive view files (>300 lines) that should be decomposed.
+- Massive view controllers: `URLSession` or persistence calls in a
+  `UIViewController`.

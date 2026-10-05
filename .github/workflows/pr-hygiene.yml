@@ -1,0 +1,48 @@
+name: pr hygiene
+
+# The PR template is only a gate if something checks it.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, ready_for_review]
+
+permissions:
+  pull-requests: read
+  contents: read
+
+jobs:
+  check:
+    name: pr-hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+
+      # Rooms and Driveway expiry are checked by room-cleanliness.yml.
+      - name: Provenance declared
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s\n' "$BODY" | grep -qE '^\s*- \[x\] (Written by hand|AI-assisted|AI-generated)'; then
+            echo "::error::Declare provenance. It is triage information, not a confession."
+            exit 1
+          fi
+
+      - name: Size cap
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$BASE_REF"
+          LINES=$(git diff --shortstat "origin/$BASE_REF...HEAD" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
+          DEL=$(git diff --shortstat "origin/$BASE_REF...HEAD" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+' || echo 0)
+          TOTAL=$((LINES + DEL))
+          echo "changed lines: $TOTAL"
+          if [ "$TOTAL" -gt 400 ]; then
+            if ! printf '%s\n' "$BODY" | grep -qi 'Reason:'; then
+              echo "::error::Over 400 changed lines with no Reason: line in the PR body. Split it or justify it."
+              exit 1
+            fi
+            echo "::warning::Large PR ($TOTAL lines) with a stated reason. Reviewer discretion."
+          fi

@@ -1,0 +1,6 @@
+# Machine-local Claude Code state. Agents, skills and agent-memory/ stay tracked.
+settings.local.json
+agent-memory-local/
+worktrees/
+*.local.md
+.DS_Store

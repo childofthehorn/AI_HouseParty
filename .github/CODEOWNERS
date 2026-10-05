@@ -1,0 +1,74 @@
+# CODEOWNERS — required reviewers by blast radius, not by org chart.
+# See adr/0001-blast-radius-tiers.md. Later rules win, so Kitchen paths are last.
+# Rooms are also mapped in .github/house/rooms.config.js; keep the two in step.
+#
+# FILL IN: replace the team handles with your real ones.
+
+# ---- Driveway: throwaway. No owner, expires (driveway-sweep.yml tows it). ----
+tools/**                            @your-org/mobile
+scripts/oneoff/**                   @your-org/mobile
+analyses/**                         @your-org/mobile
+dashboards/**                       @your-org/mobile
+
+# ---- Garage: spikes. Light touch, must not ship. ----
+sandbox/**                          @your-org/mobile
+**/experiments/**                   @your-org/mobile
+
+# ---- Living Room: core product. Normal review. ----
+*                                   @your-org/mobile
+composeApp/**                       @your-org/android
+androidApp/**                       @your-org/android
+iosApp/**                           @your-org/ios
+feature/**                          @your-org/mobile
+core/designsystem/**                @your-org/design-system @your-org/mobile
+webApp/**                           @your-org/web
+web/**                              @your-org/web
+server/**                           @your-org/backend
+
+# ---- Kitchen: money, auth, regulated, shared contracts. Two keys. ----
+core/network/**                     @your-org/platform-mobile @your-org/security
+core/auth/**                        @your-org/platform-mobile @your-org/security
+core/wallet/**                      @your-org/platform-mobile @your-org/payments
+core/compliance/**                  @your-org/platform-mobile @your-org/compliance
+**/db/migration/**                  @your-org/backend @your-org/platform-mobile
+
+# shared code is Kitchen: two platforms and a contract downstream
+shared/**                                     @your-org/platform-mobile
+shared/src/commonMain/**                      @your-org/platform-mobile @your-org/android @your-org/ios
+shared/src/*/kotlin/**/model/**                @your-org/platform-mobile @your-org/backend-contracts
+
+# ---- The door itself: nobody edits the gates alone. ----
+.github/**                          @your-org/platform-mobile
+build-logic/**                      @your-org/platform-mobile
+gradle/libs.versions.toml           @your-org/platform-mobile
+**/Package.resolved                 @your-org/platform-mobile
+**/Package.swift                    @your-org/platform-mobile
+/package.json                       @your-org/web @your-org/platform-mobile
+/package-lock.json                  @your-org/web @your-org/platform-mobile
+/pnpm-lock.yaml                     @your-org/web @your-org/platform-mobile
+/yarn.lock                          @your-org/web @your-org/platform-mobile
+/pom.xml                            @your-org/backend @your-org/platform-mobile
+iosApp/*.xcodeproj/**               @your-org/ios @your-org/platform-mobile
+iosApp/Podfile*                     @your-org/ios @your-org/platform-mobile
+**/*.xcconfig                       @your-org/ios @your-org/platform-mobile
+scripts/*                           @your-org/platform-mobile
+AGENTS.md                           @your-org/platform-mobile
+platform/AGENTS.*.md                @your-org/platform-mobile
+.claude/**                          @your-org/platform-mobile
+.claude/agent-memory/**             @your-org/mobile
+agents/**                           @your-org/platform-mobile
+skills/**                           @your-org/platform-mobile
+.codex/**                           @your-org/platform-mobile
+.gemini/**                          @your-org/platform-mobile
+.cursor/**                          @your-org/platform-mobile
+.agents/**                          @your-org/platform-mobile
+
+# ---- Safe-room: cryptography, secure storage, key material. ----
+# Mirrors safeRoom.paths; room-approval-gate adds the Safe-room approvals.
+**/crypto/**                        @your-org/platform-mobile @your-org/security
+**/cryptography/**                  @your-org/platform-mobile @your-org/security
+**/core-secure/**                   @your-org/platform-mobile @your-org/security
+**/securestorage/**                 @your-org/platform-mobile @your-org/security
+**/secure-storage/**                @your-org/platform-mobile @your-org/security
+**/keystore/**                      @your-org/platform-mobile @your-org/security
+**/keychain/**                      @your-org/platform-mobile @your-org/security
