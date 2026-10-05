@@ -1,0 +1,60 @@
+name: room approval gate
+
+# Approval rules by room AND by file/directory path (approvalRules in
+# .github/house/rooms.config.js). Every rule a PR matches must pass.
+# Reports a commit status, so make `room-approval-gate` a required status check.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches: [main]
+  pull_request_review:
+    types: [submitted, dismissed]
+  merge_group:
+
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: write
+
+concurrency:
+  group: room-approval-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      # merge_group has no pull_request payload; the gate already ran on the PR.
+      # A required status must still land on the queue commit or the queue stalls.
+      - if: github.event_name == 'merge_group'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              ...context.repo,
+              sha: context.payload.merge_group.head_sha,
+              state: 'success',
+              context: 'room-approval-gate',
+              description: 'Approvals were checked on the PR.',
+            });
+
+      - if: github.event_name != 'merge_group'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: .github/house
+          persist-credentials: false
+
+      - name: House config present on the base branch
+        run: |
+          if [ ! -f .github/house/house.js ]; then
+            echo "::error::.github/house/ is missing on the base branch. The room workflows read it from there on purpose, so the PR that introduces the house cannot pass this check; merge it, and every later PR will."
+            exit 1
+          fi
+      - if: github.event_name != 'merge_group'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const house = require(`${process.env.GITHUB_WORKSPACE}/.github/house/house.js`);
+            const config = require(`${process.env.GITHUB_WORKSPACE}/.github/house/rooms.config.js`);
+            await house.runApprovalGate({ github, context, core }, config);

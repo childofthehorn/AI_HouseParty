@@ -1,0 +1,55 @@
+name: ios quality
+
+# The iOS app: SwiftUI / UIKit structure and the Xcode test run.
+# Format, lint and Swift house rules run in swift-quality.yml.
+on:
+  pull_request:
+    paths: ["**/*.swift", "**/*.storyboard", "**/*.xib", "**/*.xcconfig", "**/*.xcodeproj/**", "**/*.xcworkspace/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    runs-on: macos-15   # Xcode 16: Swift 6 and the iPhone 16 simulator
+    env:
+      BASE_REF: ${{ github.base_ref }}
+    steps:
+      # Full history: the diff checks below need the merge base with the base branch.
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+
+      - name: Views and view controllers stay thin
+        run: |
+          set -euo pipefail
+          # Prints "path: line" for every added line in a View / ViewController / Screen file.
+          ADDED=$(git diff -U0 --no-color "origin/$BASE_REF...HEAD" -- '*View.swift' '*ViewController.swift' '*Screen.swift' \
+            | awk '/^\+\+\+ /{f=substr($0,7); next} /^\+/{print f": "substr($0,2)}')
+          FAIL=0
+          if printf '%s\n' "$ADDED" | grep -E '(URLSession|URLRequest\(|\.dataTask\(|NSManagedObjectContext|FileManager\.default)'; then
+            echo "::error::Networking or persistence added to a view or view controller. Move it to a view model or service."
+            FAIL=1
+          fi
+          if printf '%s\n' "$ADDED" | grep -E 'DispatchQueue\.main\.async'; then
+            echo "::warning::DispatchQueue.main.async in UI code. Mark the type @MainActor instead."
+          fi
+          exit "$FAIL"
+
+      - name: No new storyboards or XIBs
+        run: |
+          set -euo pipefail
+          NEW=$(git diff --name-only --diff-filter=A "origin/$BASE_REF...HEAD" -- '*.storyboard' '*.xib' \
+            | grep -v 'LaunchScreen' || true)
+          if [ -n "$NEW" ]; then
+            printf '%s\n' "$NEW"
+            echo "::error::New storyboard or XIB. Build new screens in code or SwiftUI."
+            exit 1
+          fi
+
+      - name: Tests
+        run: |
+          xcodebuild test \
+            -scheme App \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -quiet
+    # FILL IN: scheme name, and swap to your Tuist/XcodeGen generation step if used.

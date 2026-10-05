@@ -1,0 +1,76 @@
+name: jvm quality
+
+# Kotlin (every target), Java and Spring Boot: the one Gradle/Maven entry point.
+# `check` runs whatever the build wires into it (ktlint, detekt, Spotless, unit
+# tests), so the build defines its gates and nothing runs twice. APK size is in
+# android-quality.yml; shared/ Swift-facing checks are in shared-kmp-quality.yml.
+on:
+  pull_request:
+    paths: ["**/*.kt", "**/*.kts", "**/*.java", "**/pom.xml", "gradle/**", "build-logic/**", "composeApp/**", "androidApp/**", "core/**", "feature/**", "shared/**", "server/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    env:
+      BASE_REF: ${{ github.base_ref }}
+    steps:
+      # Full history: the diff checks below need the merge base with the base branch.
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: '21' }
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Build checks (lint, static analysis, unit tests)
+        run: |
+          set -euo pipefail
+          if [ -x ./gradlew ]; then
+            # Android lint is slow and has its own job in most repos; everything else hangs off check.
+            ./gradlew --no-daemon check -x lint
+          elif [ -x ./mvnw ]; then
+            ./mvnw -B -ntp verify
+          else
+            echo "::error::No ./gradlew or ./mvnw at the repo root."
+            exit 1
+          fi
+
+      - name: House rules on added lines
+        run: |
+          set -euo pipefail
+          # Prints "path: line" for every added line in non-test Kotlin and Java.
+          added() {
+            git diff -U0 --no-color "origin/$BASE_REF...HEAD" -- '*.kt' '*.java' \
+              | awk '/^\+\+\+ /{f=substr($0,7); next} /^\+/{print f": "substr($0,2)}' \
+              | grep -vE '^[^:]*(/[A-Za-z0-9]*[Tt]est[A-Za-z0-9]*/|/testFixtures/|Tests?\.(kt|java):)' || true
+          }
+          ADDED=$(added)
+          FAIL=0
+          check() { # level, pattern, message
+            HITS=$(printf '%s\n' "$ADDED" | grep -E "$2" | grep -v '// allow-' || true)
+            [ -z "$HITS" ] && return 0
+            printf '%s\n' "$HITS"
+            echo "::$1::$3"
+            [ "$1" = error ] && FAIL=1
+            return 0
+          }
+          # `!!` and GlobalScope are detekt's job (UnsafeCallOnNullableType, GlobalCoroutineUsage in config/detekt/detekt.yml).
+          check warning '\.kt: .*\brunBlocking\b'                  "runBlocking outside tests. Allowed only in main(); mark it // allow-blocking."
+          check error   '\.kt: .*@Suppress\(([^/]|/[^/])*$'        "@Suppress added without a trailing comment explaining why."
+          check error   '\.java: .*@SuppressWarnings\(([^/]|/[^/])*$' "@SuppressWarnings added without a trailing comment explaining why."
+          check error   '\.java: .*(System\.(out|err)\.|\.printStackTrace\(\))' "System.out / printStackTrace in shipped Java. Use the logger."
+          # Field injection: @Autowired on a field, on the same line or the line above.
+          FIELD=$(printf '%s\n' "$ADDED" | awk -F': ' '
+            { line=substr($0, length($1)+3) }
+            line ~ /@Autowired[ \t]+(lateinit var|(private|protected|public)[^(]*;)/ { print; next }
+            prev_f==$1 && prev ~ /@Autowired[ \t]*$/ && line ~ /^[ \t]*(lateinit var|(private|protected|public)[^(]*;)/ { print }
+            { prev_f=$1; prev=line }')
+          if [ -n "$FIELD" ]; then
+            printf '%s\n' "$FIELD"
+            echo "::error::Field injection added. Use constructor injection."
+            FAIL=1
+          fi
+          exit "$FAIL"
+

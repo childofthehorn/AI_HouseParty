@@ -1,0 +1,38 @@
+name: room label guard
+
+# Labels are set by automation from the diff. A person may only ADD Safe-room;
+# any other label added or removed by a person (or an unlisted bot) is reverted.
+# Allow-lists live in .github/house/rooms.config.js (humanAddableLabels, labelBots).
+#
+# pull_request_target: needs a write token on fork PRs. Only base code is checked out.
+on:
+  pull_request_target:
+    types: [labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: .github/house
+          persist-credentials: false
+
+      - name: House config present on the base branch
+        run: |
+          if [ ! -f .github/house/house.js ]; then
+            echo "::error::.github/house/ is missing on the base branch. The room workflows read it from there on purpose, so the PR that introduces the house cannot pass this check; merge it, and every later PR will."
+            exit 1
+          fi
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const house = require(`${process.env.GITHUB_WORKSPACE}/.github/house/house.js`);
+            const config = require(`${process.env.GITHUB_WORKSPACE}/.github/house/rooms.config.js`);
+            await house.runLabelGuard({ github, context, core }, config);

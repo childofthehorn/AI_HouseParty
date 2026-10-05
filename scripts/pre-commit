@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Local half of the door policy. Install with scripts/install-hooks.sh
+set -euo pipefail
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$STAGED" ] && exit 0
+
+fail() { echo "pre-commit: $1" >&2; exit 1; }
+# Not `| grep -q`: under pipefail an early grep exit can fail the pipeline and skip the check.
+staged() { [ -n "$(printf '%s\n' "$STAGED" | grep -E "$1" || true)" ]; }
+# Added lines in staged files matching a pathspec, outside test paths. Same scope as CI.
+added() {
+  git diff --cached -U0 --no-color -- "$@" \
+    | awk '/^\+\+\+ /{f=substr($0,7); next} /^\+/{print f": "substr($0,2)}' \
+    | grep -vE '^[^:]*(/[A-Za-z0-9]*[Tt]est[A-Za-z0-9]*/|Tests?\.(kt|swift):)' || true
+}
+
+# --- secrets ---------------------------------------------------------------
+PATTERNS='(ghp_[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,}|sk_live_[0-9A-Za-z]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)'
+if echo "$STAGED" | xargs -r grep -InE "$PATTERNS" 2>/dev/null; then
+  fail "possible secret in staged changes. Rotate it, then unstage."
+fi
+if staged '(google-services\.json|GoogleService-Info\.plist|\.jks$|\.keystore$|\.p12$|\.mobileprovision$)'; then
+  fail "signing material or service config staged."
+fi
+if [ -n "$(printf '%s\n' "$STAGED" | grep -E '(^|/)\.env(\.[A-Za-z0-9_-]+)?$' | grep -vE '\.env\.(example|sample|template)$' || true)" ]; then
+  fail ".env file staged. Commit a .env.example instead."
+fi
+
+# --- kotlin ----------------------------------------------------------------
+if staged '\.kts?$'; then
+  if [ -x ./gradlew ]; then
+    ./gradlew --quiet ktlintCheck || fail "ktlint failed. Run ./gradlew ktlintFormat"
+  fi
+  if added '*.kt' | grep -v '// allow-bang' | grep -E '!!'; then
+    fail "'!!' added in Kotlin. Use requireNotNull with a message, or fix the type."
+  fi
+fi
+
+# --- swift -----------------------------------------------------------------
+if staged '\.swift$'; then
+  if command -v swiftformat >/dev/null; then
+    swiftformat --lint $(echo "$STAGED" | grep -E '\.swift$') || fail "swiftformat failed. Run swiftformat ."
+  fi
+  if added '*.swift' | grep -E 'try!'; then
+    fail "'try!' added in Swift."
+  fi
+fi
+
+# --- java ------------------------------------------------------------------
+if echo "$STAGED" | grep -E '\.java$' | grep -vE '/test/' | xargs -r grep -InE '(System\.(out|err)\.|\.printStackTrace\(\))'; then
+  fail "System.out / printStackTrace in staged Java. Use the logger."
+fi
+
+# --- javascript / typescript (tools from the root node_modules) -------------
+JS=$(echo "$STAGED" | grep -E '\.(ts|tsx|js|jsx|mjs|cjs)$' || true)
+if [ -n "$JS" ]; then
+  if echo "$JS" | xargs -r grep -InE '@ts-(ignore|nocheck)'; then
+    fail "@ts-ignore / @ts-nocheck in staged code. Use @ts-expect-error with a reason."
+  fi
+  if [ -x node_modules/.bin/prettier ]; then
+    echo "$JS" | xargs node_modules/.bin/prettier --check || fail "prettier failed. Run prettier --write on the files above."
+  fi
+  if [ -x node_modules/.bin/eslint ]; then
+    echo "$JS" | xargs node_modules/.bin/eslint --max-warnings=0 || fail "eslint failed."
+  fi
+fi
+
+echo "pre-commit: ok"

@@ -1,0 +1,42 @@
+name: room labeler
+
+# Labels every PR with the room of each file it changes (.github/house/rooms.config.js).
+# Room labels are bot-owned: added when a room is touched, removed when it no longer is.
+# Safe-room is added by path or by hand, and never removed here.
+#
+# pull_request_target so the token can label fork PRs. Safe because only the
+# BASE commit's .github/house is checked out; PR code is never checked out or run.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: room-labeler-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: .github/house
+          persist-credentials: false
+
+      - name: House config present on the base branch
+        run: |
+          if [ ! -f .github/house/house.js ]; then
+            echo "::error::.github/house/ is missing on the base branch. The room workflows read it from there on purpose, so the PR that introduces the house cannot pass this check; merge it, and every later PR will."
+            exit 1
+          fi
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const house = require(`${process.env.GITHUB_WORKSPACE}/.github/house/house.js`);
+            const config = require(`${process.env.GITHUB_WORKSPACE}/.github/house/rooms.config.js`);
+            await house.runLabeler({ github, context, core }, config);

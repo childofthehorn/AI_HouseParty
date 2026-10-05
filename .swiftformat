@@ -1,0 +1,26 @@
+# swiftformat . (fix)  |  swiftformat --lint . (CI)
+--swiftversion 5.10
+
+--indent 4
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen balanced
+--trimwhitespace always
+--semicolons never
+--commas always
+--self remove
+--importgrouping testable-bottom
+--stripunusedargs closure-only
+--redundanttype inferred
+--typeattributes prev-line
+--funcattributes prev-line
+
+--disable trailingClosures
+--enable isEmpty
+--enable blankLinesAtStartOfScope
+--enable redundantReturn
+--enable sortedImports
+
+--exclude .build,DerivedData,**/Generated,**/*.generated.swift

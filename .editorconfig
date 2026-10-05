@@ -1,0 +1,36 @@
+# ktlint and Prettier read this. Keep it small; disagreements go in an ADR, not here.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{kt,kts}]
+max_line_length = 120
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+ij_kotlin_imports_layout = *,java.**,javax.**,kotlin.**,^
+ktlint_standard_no-wildcard-imports = enabled
+ktlint_standard_filename = enabled
+ktlint_standard_function-naming = enabled
+# Compose: @Composable functions are PascalCase, so exempt them
+ktlint_function_naming_ignore_when_annotated_with = Composable, Test, ParameterizedTest
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[*.{js,jsx,ts,tsx,mjs,cjs}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.swift]
+indent_size = 4
+
+[*.{gradle,properties,toml}]
+indent_size = 2
