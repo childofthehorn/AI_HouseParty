@@ -1,8 +1,10 @@
 name: pages
 
 # The documentation site. Built from the repository's own markdown on every PR
-# (as a check) and deployed from main. Enable Pages once with
-#   gh api -X POST repos/OWNER/REPO/pages -f build_type=workflow
+# (as a check) and deployed from main. The Pages source must be GitHub Actions;
+# in branch mode GitHub's default theme builds the repo root instead. Set it with
+#   gh api -X POST repos/OWNER/REPO/pages -f build_type=workflow   # first time
+#   gh api -X PUT  repos/OWNER/REPO/pages -f build_type=workflow   # already enabled
 on:
   push:
     branches: [main]

@@ -11,7 +11,11 @@ the room it touches. Agents follow the same rules as the people.
 **Website:** <https://childofthehorn.github.io/AI_HouseParty/> is these same
 files, rendered. `docs/` holds only the shell (a layout, a stylesheet, one JS
 file, a landing page); `.github/workflows/pages.yml` builds the site from the
-markdown on every PR and deploys it from `main`.
+markdown on every PR and deploys it from `main`. The Pages source must be
+**GitHub Actions**, not a branch: in branch mode GitHub builds the repository
+root with its default theme and none of this ships (no diagrams, no layout).
+Set it once with `gh api -X PUT repos/OWNER/REPO/pages -f build_type=workflow`,
+or Settings → Pages → Source → GitHub Actions.
 
 ## Contents
 
