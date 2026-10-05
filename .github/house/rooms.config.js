@@ -15,13 +15,17 @@ module.exports = {
       // agents write their memory as they learn, so it cannot carry Kitchen gates.
       id: 'living-room',
       name: 'Living Room',
-      label: 'room/living-room',
+      label: 'living-room',
+      color: '0E8A16',
+      description: 'Core product. Normal review, full CI.',
       paths: ['.claude/agent-memory/'],
     },
     {
       id: 'kitchen',
       name: 'Kitchen',
-      label: 'room/kitchen',
+      label: 'kitchen',
+      color: 'D93F0B',
+      description: 'Money, auth, regulated flows, shared contracts, the gates. Two approvals, one senior.',
       paths: [
         'shared/',
         'core/network/',
@@ -58,13 +62,17 @@ module.exports = {
     {
       id: 'garage',
       name: 'Garage',
-      label: 'room/garage',
+      label: 'garage',
+      color: 'FBCA04',
+      description: 'Spike or prototype. Nothing ships from here.',
       paths: ['sandbox/', '**/experiments/**'],
     },
     {
       id: 'driveway',
       name: 'Driveway',
-      label: 'room/driveway',
+      label: 'driveway',
+      color: '6F42C1',
+      description: 'Throwaway with an expiry date. Towed when it passes.',
       // scripts/ as a whole is real tooling (pre-commit, setup); only oneoff/ is throwaway
       paths: ['tools/', 'scripts/oneoff/', 'analyses/', 'dashboards/'],
     },
@@ -77,7 +85,9 @@ module.exports = {
   safeRoom: {
     id: 'safe-room',
     name: 'Safe-room',
-    label: 'room/safe-room',
+    label: 'safe-room',
+    color: '000000',
+    description: 'Cryptography, secure storage, key material. The only label a person may add.',
     paths: [
       '**/crypto/**',
       '**/cryptography/**',
@@ -90,7 +100,9 @@ module.exports = {
   },
 
   // Labels a person may ADD. Every other human label change is reverted.
-  humanAddableLabels: ['room/safe-room'],
+  humanAddableLabels: ['safe-room'],
+  // The labeler creates these labels with the colors above, renaming a v1 `room/<label>` in place.
+  legacyLabelPrefix: 'room/',
   // Accounts whose label changes are trusted. Add your sweep GitHub App's bot login here.
   labelBots: ['github-actions[bot]'],
 

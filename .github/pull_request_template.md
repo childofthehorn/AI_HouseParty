@@ -6,13 +6,13 @@
 
 <!-- Tick every room this PR touches. The room cleanliness check fails if the
 diff touches a room you did not tick. Labels are set by automation; the only
-label you may add is room/safe-room. -->
+label you may add is `safe-room`. -->
 
 - [ ] Kitchen — money, auth, regulated, shared contracts
 - [ ] Living Room — core product
 - [ ] Garage — spike or prototype, not shipping
 - [ ] Driveway — throwaway, has an expiry date below
-- [ ] Safe-room — cryptography, secure storage, key material (also add the `room/safe-room` label)
+- [ ] Safe-room — cryptography, secure storage, key material (also add the `safe-room` label)
 
 Expiry (Driveway only): `YYYY-MM-DD`
 

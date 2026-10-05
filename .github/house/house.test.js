@@ -40,7 +40,7 @@ test('each file gets its first matching room, unmatched files are Living Room', 
 test('Safe-room stacks on the file room, from paths or from the label', () => {
   const byPath = h.detectRooms(['core/auth/crypto/Aes.kt'], config);
   assert.deepEqual([...byPath.keys()].sort(), ['kitchen', 'safe-room']);
-  const byLabel = h.detectRooms(['feature/home/Home.kt'], config, ['room/safe-room']);
+  const byLabel = h.detectRooms(['feature/home/Home.kt'], config, ['safe-room']);
   assert.deepEqual([...byLabel.keys()].sort(), ['living-room', 'safe-room']);
 });
 
@@ -66,11 +66,11 @@ test('cleanliness passes with every touched room declared, over-declaring allowe
 });
 
 test('Safe-room: label requires the tick, a hand tick requires the label', () => {
-  const unticked = h.cleanlinessErrors({ body: body('Living Room'), files: ['feature/a.kt'], labels: ['room/safe-room'], now: NOW }, config);
-  assert.deepEqual(unticked, ['Undeclared room: Safe-room — it carries the room/safe-room label.']);
+  const unticked = h.cleanlinessErrors({ body: body('Living Room'), files: ['feature/a.kt'], labels: ['safe-room'], now: NOW }, config);
+  assert.deepEqual(unticked, ['Undeclared room: Safe-room — it carries the safe-room label.']);
   const unlabeled = h.cleanlinessErrors({ body: body('Living Room', 'Safe-room'), files: ['feature/a.kt'], labels: [], now: NOW }, config);
   assert.equal(unlabeled.length, 1);
-  assert.match(unlabeled[0], /no room\/safe-room label/);
+  assert.match(unlabeled[0], /no safe-room label/);
   // path-detected: the labeler adds the label in parallel, so the tick alone is enough
   const byPath = h.cleanlinessErrors({ body: body('Kitchen', 'Safe-room'), files: ['core/auth/keystore/K.kt'], labels: [], now: NOW }, config);
   assert.deepEqual(byPath, []);
@@ -98,7 +98,7 @@ test('approval rules match by room and by file/directory path', () => {
   assert.deepEqual(names(['server/src/main/resources/db/migration/V2__add_index.sql']), ['Kitchen']);
   assert.deepEqual(names(['webApp/src/App.tsx']), []);
   assert.deepEqual(names(['core/core-secure/Vault.kt']), ['Safe-room']);
-  assert.deepEqual(names(['feature/home/Home.kt'], ['room/safe-room']), ['Safe-room']);
+  assert.deepEqual(names(['feature/home/Home.kt'], ['safe-room']), ['Safe-room']);
 });
 
 test('a later comment keeps an approval; a dismissal or change request drops it', () => {
@@ -127,12 +127,12 @@ test('people can only add Safe-room; every other label change is reverted', () =
   const human = { login: 'dev', type: 'User' };
   const bot = { login: 'github-actions[bot]', type: 'Bot' };
   const otherBot = { login: 'random-app[bot]', type: 'Bot' };
-  assert.equal(h.labelRevert({ action: 'labeled', label: 'room/safe-room', sender: human }, config), null);
-  assert.deepEqual(h.labelRevert({ action: 'unlabeled', label: 'room/safe-room', sender: human }, config), { add: 'room/safe-room' });
-  assert.deepEqual(h.labelRevert({ action: 'labeled', label: 'room/garage', sender: human }, config), { remove: 'room/garage' });
-  assert.deepEqual(h.labelRevert({ action: 'unlabeled', label: 'room/kitchen', sender: human }, config), { add: 'room/kitchen' });
-  assert.deepEqual(h.labelRevert({ action: 'labeled', label: 'room/kitchen', sender: otherBot }, config), { remove: 'room/kitchen' });
-  assert.equal(h.labelRevert({ action: 'unlabeled', label: 'room/kitchen', sender: bot }, config), null);
+  assert.equal(h.labelRevert({ action: 'labeled', label: 'safe-room', sender: human }, config), null);
+  assert.deepEqual(h.labelRevert({ action: 'unlabeled', label: 'safe-room', sender: human }, config), { add: 'safe-room' });
+  assert.deepEqual(h.labelRevert({ action: 'labeled', label: 'garage', sender: human }, config), { remove: 'garage' });
+  assert.deepEqual(h.labelRevert({ action: 'unlabeled', label: 'kitchen', sender: human }, config), { add: 'kitchen' });
+  assert.deepEqual(h.labelRevert({ action: 'labeled', label: 'kitchen', sender: otherBot }, config), { remove: 'kitchen' });
+  assert.equal(h.labelRevert({ action: 'unlabeled', label: 'kitchen', sender: bot }, config), null);
 });
 
 test('tow list: expired Driveway files that still exist; a later PR renews', () => {
@@ -156,6 +156,7 @@ test('runners: labeler adds missing room labels and drops stale ones, never Safe
     rest: {
       pulls: { listFiles: 'listFiles' },
       issues: {
+        getLabel: async ({ name }) => ({ data: { name, color: config.rooms.concat(config.safeRoom).find((r) => r.label === name).color, description: config.rooms.concat(config.safeRoom).find((r) => r.label === name).description } }),
         addLabels: async (a) => calls.push(['add', a.labels]),
         removeLabel: async (a) => calls.push(['remove', a.name]),
       },
@@ -163,8 +164,33 @@ test('runners: labeler adds missing room labels and drops stale ones, never Safe
   };
   const context = {
     repo: { owner: 'o', repo: 'r' },
-    payload: { pull_request: { number: 7, labels: [{ name: 'room/garage' }, { name: 'room/safe-room' }] } },
+    payload: { pull_request: { number: 7, labels: [{ name: 'garage' }, { name: 'safe-room' }] } },
   };
   await h.runLabeler({ github, context, core: { info() {} } }, config);
-  assert.deepEqual(calls, [['add', ['room/kitchen']], ['remove', 'room/garage']]);
+  assert.deepEqual(calls, [['add', ['kitchen']], ['remove', 'garage']]);
+});
+
+test('runners: ensureLabels creates, recolors, and renames v1 room/ labels in place', async () => {
+  const existing = { kitchen: { color: 'ededed', description: '' }, 'room/garage': { color: 'ededed', description: '' } };
+  const calls = [];
+  const github = {
+    rest: {
+      issues: {
+        getLabel: async ({ name }) => {
+          if (existing[name]) return { data: { name, ...existing[name] } };
+          const error = new Error('Not Found'); error.status = 404; throw error;
+        },
+        createLabel: async (a) => calls.push(['create', a.name, a.color]),
+        updateLabel: async (a) => calls.push(['update', a.name, a.new_name ?? null, a.color]),
+      },
+    },
+  };
+  await h.ensureLabels({ github, context: { repo: { owner: 'o', repo: 'r' } } }, config);
+  assert.deepEqual(calls.sort(), [
+    ['update', 'kitchen', null, 'D93F0B'],          // existed in default gray: recolored
+    ['update', 'room/garage', 'garage', 'FBCA04'],  // v1 name: renamed in place
+    ['create', 'driveway', '6F42C1'],
+    ['create', 'safe-room', '000000'],
+    ['create', 'living-room', '0E8A16'],
+  ].sort());
 });

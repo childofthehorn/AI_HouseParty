@@ -1,7 +1,7 @@
 name: driveway sweep
 
 # ADR-0002: everything in the driveway gets towed. This is the tow truck.
-# Finds files from merged PRs the room labeler marked room/driveway whose
+# Finds files from merged PRs the room labeler marked `driveway` whose
 # declared expiry (or merge date + 90 days) has passed, and opens one PR that
 # deletes them. It never pushes to main: towing still goes through review.
 #
@@ -106,4 +106,4 @@ jobs:
         env:
           # Labels via GITHUB_TOKEN do not fire `labeled`, so the label guard leaves them alone.
           GH_TOKEN: ${{ github.token }}
-        run: gh pr edit driveway/tow --add-label room/driveway,driveway-sweep
+        run: gh pr edit driveway/tow --add-label driveway,driveway-sweep

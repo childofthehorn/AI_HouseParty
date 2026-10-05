@@ -15,7 +15,7 @@ useful, and nobody deletes someone else's work voluntarily.
 
 Driveway PRs declare an expiry date in the PR body (enforced by
 `.github/workflows/room-cleanliness.yml`). The room labeler marks them
-`room/driveway`. Every Monday `.github/workflows/driveway-sweep.yml` finds files
+`driveway`. Every Monday `.github/workflows/driveway-sweep.yml` finds files
 from merged Driveway PRs past expiry (or merge date + 90 days when none was
 declared) and opens one tow PR deleting them. A later Driveway PR touching a file
 renews it. The tow PR states a two-week expiry: promote or renew within that

@@ -58,7 +58,7 @@ and cannot be changed by an agent without a named human reviewer.
 
 Room labels are set by automation from the diff (ADR-0003). Tick every room your
 PR touches in the template; the only label you may add by hand is
-`room/safe-room`.
+`safe-room`.
 
 ## Before you say you are done
 
