@@ -28,6 +28,12 @@ jobs:
           sparse-checkout: .github/house
           persist-credentials: false
 
+      - name: House config present on the base branch
+        run: |
+          if [ ! -f .github/house/house.js ]; then
+            echo "::error::.github/house/ is missing on the base branch. The room workflows read it from there on purpose, so the PR that introduces the house cannot pass this check; merge it, and every later PR will."
+            exit 1
+          fi
       - uses: actions/github-script@v9
         with:
           script: |
