@@ -198,7 +198,7 @@ adr/                                   decision records (see adr/README.md)
 
 .github/CODEOWNERS                     the door: required reviewers by blast radius
 .github/pull_request_template.md       rooms (tick all that apply) + provenance
-.github/labels.yml                     labels the workflows depend on
+.github/labels.yml                     the non-room labels (driveway-sweep, chore/format, ai-generated); room labels come from rooms.config.js
 .github/house/rooms.config.js          the house map as code: rooms, Safe-room, approval rules
 .github/house/house.js                 room logic shared by the room workflows (+ house.test.js)
 .github/workflows/room-labeler.yml       labels PRs by the rooms their files touch
@@ -220,7 +220,7 @@ scripts/v1-setup.sh                    install into a repo (quality workflows on
 scripts/pre-commit                     local half of the door policy
 scripts/install-hooks.sh               one command, no excuses
 scripts/branch-protection.sh           branch protection as code
-scripts/setup-labels.sh                create the labels in .github/labels.yml
+scripts/setup-labels.sh                create the labels in .github/labels.yml (the room labeler makes its own)
 scripts/collect-repo-context.sh        run in your repo; dumps stacks and config needed to specialise
 scripts/export-agents.py               generate the other runtimes' layouts from agents/ and skills/ (--check)
 .editorconfig  config/detekt/detekt.yml  .swiftformat  .swiftlint.yml  .gitleaks.toml
@@ -326,7 +326,10 @@ Test the logic: `node --test .github/house/house.test.js`.
 
 ### Before turning it on
 
-1. Create the labels: `scripts/setup-labels.sh owner/repo`.
+1. Create the non-room labels: `scripts/setup-labels.sh owner/repo`. The room
+   labels (`kitchen`, `living-room`, `garage`, `driveway`, `safe-room`) are
+   created and colored by the labeler itself, from `rooms.config.js`, on the
+   first PR.
 2. Replace the placeholder logins in `teams` and adjust room paths.
 3. Run `scripts/branch-protection.sh`. It requires only checks that run on
    every PR: `gitleaks`, `mobile_specific`, `pr-hygiene`, `rooms-declared`,

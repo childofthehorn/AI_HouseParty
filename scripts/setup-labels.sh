@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Create the labels the workflows expect. Idempotent.
+# Create the non-room labels the workflows expect. Idempotent. The room labels
+# are created by the room labeler from .github/house/rooms.config.js.
 set -euo pipefail
 REPO="${1:?usage: setup-labels.sh owner/repo}"
 
