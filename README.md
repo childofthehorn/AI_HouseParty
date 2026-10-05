@@ -297,18 +297,18 @@ sequenceDiagram
   C-->>PR: rooms-declared ✓ / ✗
   Dev->>PR: changes a label by hand
   PR->>G: label event
-  G-->>PR: revert (unless adding room/safe-room)
+  G-->>PR: revert (unless adding safe-room)
   PR->>A: reviews submitted
   A-->>PR: room-approval-gate status
 ```
 
 | Workflow | Runs on | Does |
 |---|---|---|
-| `room-labeler.yml` | PR opened / pushed | labels `room/<room>` for every room touched; drops labels for rooms no longer touched; never removes Safe-room |
+| `room-labeler.yml` | PR opened / pushed | creates the room labels (name, color, description from `rooms.config.js`), labels every room touched, drops labels for rooms no longer touched; never removes Safe-room |
 | `room-cleanliness.yml` | PR opened / pushed / edited / labeled | fails unless every touched room is ticked, Safe-room matches its label, and Driveway has a future `Expiry:` |
-| `room-label-guard.yml` | label added / removed | reverts any label change by a person, except **adding** `room/safe-room` |
+| `room-label-guard.yml` | label added / removed | reverts any label change by a person, except **adding** `safe-room` |
 | `room-approval-gate.yml` | PR + reviews | `room-approval-gate` status: every matching rule must pass |
-| `driveway-sweep.yml` | Mondays + manual (`dry_run`) | one `driveway/tow` PR deleting files from expired `room/driveway` PRs; never pushes to main |
+| `driveway-sweep.yml` | Mondays + manual (`dry_run`) | one `driveway/tow` PR deleting files from expired `driveway` PRs; never pushes to main |
 
 **Approval rules** (`approvalRules`) match by room, by file/directory name, or
 both. A plain name covers that file or everything under that directory

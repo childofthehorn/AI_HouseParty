@@ -191,7 +191,39 @@ async function prFiles(github, context, number) {
   return files.map((f) => f.filename);
 }
 
+// Create each room label with its color and description, update one that drifted,
+// or rename a v1 `room/<label>` in place so PR history keeps the label.
+async function ensureLabels({ github, context }, config) {
+  for (const room of allRooms(config)) {
+    const want = { name: room.label, color: room.color, description: room.description };
+    const current = await getLabel(github, context, room.label);
+    if (current) {
+      if (current.color.toUpperCase() !== want.color.toUpperCase() || (current.description || '') !== want.description) {
+        await github.rest.issues.updateLabel({ ...context.repo, ...want });
+      }
+      continue;
+    }
+    const legacyName = `${config.legacyLabelPrefix || ''}${room.label}`;
+    const legacy = config.legacyLabelPrefix ? await getLabel(github, context, legacyName) : null;
+    if (legacy) {
+      await github.rest.issues.updateLabel({ ...context.repo, name: legacyName, new_name: want.name, color: want.color, description: want.description });
+    } else {
+      await github.rest.issues.createLabel({ ...context.repo, ...want });
+    }
+  }
+}
+
+async function getLabel(github, context, name) {
+  try {
+    return (await github.rest.issues.getLabel({ ...context.repo, name })).data;
+  } catch (error) {
+    if (error.status === 404) return null;
+    throw error;
+  }
+}
+
 async function runLabeler({ github, context, core }, config) {
+  await ensureLabels({ github, context }, config);
   const pr = context.payload.pull_request;
   const labels = pr.labels.map((l) => l.name);
   const rooms = detectRooms(await prFiles(github, context, pr.number), config, labels);
@@ -315,6 +347,7 @@ module.exports = {
   evaluateRules,
   labelRevert,
   towList,
+  ensureLabels,
   runLabeler,
   runCleanliness,
   runLabelGuard,

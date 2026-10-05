@@ -18,7 +18,7 @@ fires. Labels that anyone can remove are a bypass, not a gate.
 - `room-cleanliness.yml` fails the PR unless the template ticks every room the
   diff touches. Several rooms are allowed; over-declaring is allowed.
 - `room-label-guard.yml` reverts any label a person adds or removes. The one
-  exception is **adding** `room/safe-room`: an author who knows the code is
+  exception is **adding** `safe-room`: an author who knows the code is
   sensitive can raise the bar, never lower it.
 - `room-approval-gate.yml` enforces approvals by room and by file/directory
   path. Dependency sign-off is an approval rule, not a label.
