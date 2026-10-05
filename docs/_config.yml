@@ -1,0 +1,47 @@
+# Jekyll settings for the GitHub Pages site. The pages themselves are the
+# repository's own markdown; scripts/build-site.sh assembles them next to this
+# shell before GitHub builds it. Nothing here needs installing.
+title: House Rules
+description: The file set from The AI Slop Party. Rooms by blast radius, gates at the door, and agents that read the fridge.
+url: https://childofthehorn.github.io
+baseurl: /AI_HouseParty
+repository: childofthehorn/AI_HouseParty
+
+markdown: kramdown
+kramdown:
+  input: GFM
+permalink: pretty
+
+# Whitelisted on GitHub Pages. Turns [x](AGENTS.md) into the page's URL.
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: false
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+# Site navigation, in reading order. URLs are site-relative; the layout applies baseurl.
+nav:
+  - title: Start here
+    url: /
+  - title: README
+    url: /README/
+  - title: House rules
+    url: /house-rules/
+  - title: Platform rules
+    url: /platform/
+  - title: Decisions
+    url: /adr/
+  - title: Agents
+    url: /agents/
+  - title: Skills
+    url: /skills/
+  - title: Other AI systems
+    url: /PORTABILITY/
+  - title: Assumptions
+    url: /ASSUMPTIONS/

@@ -1,1 +1,4 @@
 .DS_Store
+# local site builds (GitHub builds the real one)
+_site_src/
+_site/

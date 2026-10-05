@@ -43,6 +43,7 @@ every platform file your diff covers.
 | `**/db/migration/` | database migrations (Flyway / Liquibase) | **Kitchen** |
 | `.claude/agent-memory/` | agent memory; agents write here as they learn | Living Room |
 | `agents/`, `skills/`, `.claude/`, `.codex/`, `.gemini/`, `.cursor/`, `.agents/` | agent and skill definitions, one source plus generated copies per runtime | **Kitchen** |
+| `docs/` | the website shell (layout, CSS, one JS file, landing page); its content is the markdown next to it | Living Room |
 | `sandbox/` | spikes and prototypes | Garage |
 | `tools/`, `scripts/oneoff/`, `analyses/`, `dashboards/` | one-off scripts, dashboards, analyses | Driveway |
 | `**/crypto/**`, `**/keystore/**`, `**/keychain/**`, `**/core-secure/**`, … | cryptography, secure storage, key material | **Safe-room** (on top of its room) |
